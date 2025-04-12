@@ -1,5 +1,5 @@
 from sanic import Blueprint, response
-from schedule import get_schedule_for_series
+from .schedule import get_schedule_for_series
 
 nascar_bp = Blueprint("nascar", url_prefix="/nascar")
 
