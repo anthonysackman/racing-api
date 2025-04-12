@@ -18,38 +18,33 @@ def format_datetime_from_eastern_to_pst(dt_str):
         return None
 
 
-def format_event_schedule(events):
-    for event in events:
-        start_time = event.get("start_time_utc")
-        if start_time:
-            formatted = format_datetime_from_eastern_to_pst(start_time)
-            if formatted:
-                event["start_time_utc_formatted"] = formatted
-
-
 def get_live_race_data():
     try:
         response = requests.get(LIVE_URL, timeout=10)
         response.raise_for_status()
         data = response.json()
 
-        if isinstance(data, dict) and data.get("race_id"):
-            if "schedule" in data:
-                format_event_schedule(data["schedule"])
-            # Format main date fields
-            for key in [
-                "date_scheduled",
-                "race_date",
-                "qualifying_date",
-                "tunein_date",
-            ]:
-                if key in data and data[key]:
-                    formatted = format_datetime_from_eastern_to_pst(data[key])
-                    if formatted:
-                        data[f"{key}_formatted"] = formatted
-            return data
+        if not data.get("vehicles"):
+            return None  # No live race data
 
-        return None  # No live race
+        # Format time_of_day_os
+        if "time_of_day_os" in data:
+            formatted = format_datetime_from_eastern_to_pst(data["time_of_day_os"][:19])
+            if formatted:
+                data["time_of_day_os_formatted"] = formatted
+
+        # Format lap times, deltas, etc. per vehicle if needed
+        for v in data.get("vehicles", []):
+            driver = v.get("driver", {})
+            v["driver_name"] = driver.get("full_name")
+            v["position"] = v.get("running_position")
+            v["laps_completed"] = v.get("laps_completed")
+            v["last_lap_time"] = v.get("last_lap_time")
+            v["last_lap_speed"] = v.get("last_lap_speed")
+            v["vehicle_number"] = v.get("vehicle_number")
+
+        return data
+
     except Exception as e:
-        print(f"[ERROR] Failed to fetch live feed: {e}")
+        print(f"[ERROR] Failed to fetch live race feed: {e}")
         return None
