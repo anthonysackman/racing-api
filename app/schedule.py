@@ -16,7 +16,7 @@ def format_datetime_from_eastern_to_pst(dt_str):
         dt_naive = datetime.datetime.fromisoformat(dt_str)
         dt_eastern = EASTERN.localize(dt_naive)
         dt_pacific = dt_eastern.astimezone(PACIFIC)
-        return dt_pacific.strftime("%B %d, %I:%M %p %Z")
+        return dt_pacific.strftime("%B %d, %I:%M %p")
     except Exception as e:
         print(f"[Datetime parse error] {e}")
         return None
