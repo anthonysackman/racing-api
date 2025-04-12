@@ -2,20 +2,23 @@ import os
 import json
 import requests
 import datetime
-from pytz import timezone, UTC
+from pytz import timezone
 
+EASTERN = timezone("US/Eastern")
 PACIFIC = timezone("US/Pacific")
 YEAR = "2025"
 URL = f"https://cf.nascar.com/cacher/{YEAR}/race_list_basic.json"
 CACHE_FILE = os.path.join("data", "schedule.json")
 
 
-def format_datetime_to_pst(dt_str):
+def format_datetime_from_eastern_to_pst(dt_str):
     try:
-        utc = datetime.datetime.fromisoformat(dt_str).replace(tzinfo=UTC)
-        local = utc.astimezone(PACIFIC)
-        return local.strftime("%B %d, %I:%M %p %Z")
-    except Exception:
+        dt_naive = datetime.datetime.fromisoformat(dt_str)
+        dt_eastern = EASTERN.localize(dt_naive)
+        dt_pacific = dt_eastern.astimezone(PACIFIC)
+        return dt_pacific.strftime("%B %d, %I:%M %p %Z")
+    except Exception as e:
+        print(f"[Datetime parse error] {e}")
         return None
 
 
@@ -23,7 +26,7 @@ def add_formatted_dates_to_race(race):
     fields = ["date_scheduled", "race_date", "qualifying_date", "tunein_date"]
     for field in fields:
         if field in race and race[field]:
-            formatted = format_datetime_to_pst(race[field])
+            formatted = format_datetime_from_eastern_to_pst(race[field])
             if formatted:
                 race[f"{field}_formatted"] = formatted
 
@@ -31,7 +34,7 @@ def add_formatted_dates_to_race(race):
         for event in race["schedule"]:
             start_time = event.get("start_time_utc")
             if start_time:
-                formatted = format_datetime_to_pst(start_time)
+                formatted = format_datetime_from_eastern_to_pst(start_time)
                 if formatted:
                     event["start_time_utc_formatted"] = formatted
 
