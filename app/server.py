@@ -1,5 +1,6 @@
 from sanic import Sanic
-from routes import nascar_bp
+from .routes import nascar_bp
+
 
 app = Sanic("NASCARAPI")
 app.blueprint(nascar_bp)
