@@ -125,3 +125,28 @@ def get_schedule_for_series(series_id):
         return [next_race]
 
     return []
+
+
+def get_last_race_for_series(series_id):
+    data = ensure_schedule()
+    if not data:
+        return None
+
+    series_key = f"series_{series_id}"
+    races = sorted(
+        data.get(series_key, []), key=lambda r: r.get("race_date", ""), reverse=True
+    )
+    today = datetime.datetime.now(tz=PACIFIC).date()
+
+    for race in races:
+        try:
+            race_date = datetime.datetime.fromisoformat(race["race_date"]).date()
+        except:
+            continue
+
+        if race_date < today:
+            add_formatted_dates_to_race(race)
+            race["is_last_race"] = True
+            return race
+
+    return None

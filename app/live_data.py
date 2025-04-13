@@ -1,6 +1,5 @@
 import requests
 import datetime
-import re
 from pytz import timezone
 
 EASTERN = timezone("US/Eastern")
