@@ -26,9 +26,22 @@ async def get_live_race(request):
 @nascar_bp.get("/race/last/<series_id:int>")
 async def get_last_race(request, series_id):
     race = get_last_race_for_series(series_id)
-    if race:
-        return response.json(race)
-    return response.json({"error": "No past race found"}, status=404)
+    if not race:
+        return response.json({"error": "No past race found"}, status=404)
+
+    winner_id = race.get("winner_driver_id")
+    if winner_id:
+        race_id = race.get("race_id")
+        standings = fetch_standings(series_id, race_id)
+        if standings:
+            for driver in standings:
+                if driver.get("driver_id") == winner_id:
+                    first = driver.get("first_name", "")
+                    last = driver.get("last_name", "")
+                    race["winner_name"] = f"{first} {last}"
+                    break
+
+    return response.json(race)
 
 
 @nascar_bp.get("/standings/<series_id:int>")
