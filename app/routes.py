@@ -37,7 +37,7 @@ async def get_series_standings(request, series_id):
     if not race_id:
         return response.json({"error": "No completed race found"}, status=404)
 
-    standings = fetch_standings(series_id, race_id)
+    standings = fetch_standings(series_id, race_id, 10)
     if standings is None:
         return response.json({"error": "Failed to fetch standings"}, status=502)
 
