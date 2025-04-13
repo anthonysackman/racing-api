@@ -3,10 +3,9 @@ from .schedule import get_last_completed_race
 
 
 def get_last_completed_race_id(series_id: int):
-    schedule = get_last_completed_race(series_id)
-    for race in schedule:
-        if race.get("is_last_race"):
-            return race.get("race_id")
+    race = get_last_completed_race(series_id)
+    if race and isinstance(race, dict):
+        return race.get("race_id")
     return None
 
 
