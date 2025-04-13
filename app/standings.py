@@ -1,9 +1,9 @@
 import requests
-from .schedule import get_last_completed_race
+from .schedule import get_last_race_for_series
 
 
 def get_last_completed_race_id(series_id: int):
-    race = get_last_completed_race(series_id)
+    race = get_last_race_for_series(series_id)
     if race and isinstance(race, dict):
         return race.get("race_id")
     return None
