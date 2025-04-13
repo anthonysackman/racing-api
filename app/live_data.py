@@ -1,5 +1,6 @@
 import requests
 import datetime
+import re
 from pytz import timezone
 
 EASTERN = timezone("US/Eastern")
@@ -18,6 +19,13 @@ def format_datetime_from_eastern_to_pst(dt_str):
         return None
 
 
+def clean_last_name(name):
+    for i, c in enumerate(name):
+        if not (c.isalnum() or c == "'"):
+            return name[:i]
+    return name
+
+
 def get_live_race_data():
     try:
         response = requests.get(LIVE_URL, timeout=10)
@@ -33,16 +41,30 @@ def get_live_race_data():
             if formatted:
                 data["time_of_day_os_formatted"] = formatted
 
-        # Format lap times, deltas, etc. per vehicle if needed
-        for v in data.get("vehicles", []):
-            driver = v.get("driver", {})
-            v["driver_name"] = driver.get("full_name")
-            v["position"] = v.get("running_position")
-            v["laps_completed"] = v.get("laps_completed")
-            v["last_lap_time"] = v.get("last_lap_time")
-            v["last_lap_speed"] = v.get("last_lap_speed")
-            v["vehicle_number"] = v.get("vehicle_number")
+        top_3 = sorted(data["vehicles"], key=lambda v: v.get("running_position", 999))[
+            :3
+        ]
+        formatted_vehicles = []
 
+        for v in top_3:
+            driver = v.get("driver", {})
+            first = driver.get("first_name", "")
+            last = driver.get("last_name", "")
+            short_name = f"{first[:1]}, {clean_last_name(last)}"
+
+            formatted_vehicles.append(
+                {
+                    "driver_name": driver.get("full_name"),
+                    "short_display_name": short_name,
+                    "position": v.get("running_position"),
+                    "laps_completed": v.get("laps_completed"),
+                    "last_lap_time": v.get("last_lap_time"),
+                    "last_lap_speed": v.get("last_lap_speed"),
+                    "vehicle_number": v.get("vehicle_number"),
+                }
+            )
+
+        data["vehicles"] = formatted_vehicles
         return data
 
     except Exception as e:
