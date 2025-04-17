@@ -1,9 +1,7 @@
 from sanic import Sanic
-from .routes import nascar_bp
+from app.nascar.routes import nascar_bp
+from app.baseball.routes import baseball_bp
 
-
-app = Sanic("NASCARAPI")
+app = Sanic("SportsAPI")
 app.blueprint(nascar_bp)
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug=True)
+app.blueprint(baseball_bp)
