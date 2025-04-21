@@ -2,15 +2,11 @@ from sanic import Blueprint, response, Request
 import json
 from pathlib import Path
 
-# Import other routes or blueprints if needed here
-# from .nascar.routes import bp as nascar_bp
-# from .baseball.routes import bp as baseball_bp
-
-app = Blueprint("main")
+index_bp = Blueprint("index", url_prefix="/")
 STATUS_FILE = Path(__file__).parent / "data" / "display_status.json"
 
 
-@app.get("/")
+@index_bp.get("/")
 async def index(request: Request):
     current = "all"
     if STATUS_FILE.exists():
@@ -35,7 +31,7 @@ async def index(request: Request):
     """)
 
 
-@app.post("/set_mode")
+@index_bp.post("/set_mode")
 async def set_mode(request: Request):
     mode = request.form.get("mode", "all")
     STATUS_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -44,7 +40,7 @@ async def set_mode(request: Request):
     return response.redirect("/")
 
 
-@app.get("/status")
+@index_bp.get("/status")
 async def get_status(request: Request):
     if STATUS_FILE.exists():
         with open(STATUS_FILE, "r") as f:
