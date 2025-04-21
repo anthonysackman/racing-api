@@ -15,7 +15,9 @@ def get_team_id_by_name(name):
 
 def get_last_game(team_id):
     today = datetime.today().strftime("%Y-%m-%d")
-    res = requests.get(f"{BASE_URL}/schedule?teamId={team_id}&endDate={today}&limit=10")
+    res = requests.get(
+        f"{BASE_URL}/schedule?sportId=1&teamId={team_id}&startDate=2024-01-01&endDate={today}&limit=100"
+    )
     for date in reversed(res.json().get("dates", [])):
         for game in date["games"]:
             if game["status"]["detailedState"] == "Final":
@@ -25,11 +27,9 @@ def get_last_game(team_id):
 
 def get_next_game(team_id):
     tomorrow = (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d")
-    print(tomorrow)
     res = requests.get(
-        f"{BASE_URL}/schedule?teamId={team_id}&startDate={tomorrow}&limit=5"
+        f"{BASE_URL}/schedule?sportId=1&teamId={team_id}&startDate={tomorrow}&endDate={tomorrow}&limit=5"
     )
-    print(res.json())
     for date in res.json().get("dates", []):
         for game in date["games"]:
             if game["status"]["detailedState"] == "Scheduled":
@@ -40,10 +40,21 @@ def get_next_game(team_id):
 def get_live_game(team_id):
     today = datetime.today().strftime("%Y-%m-%d")
     res = requests.get(
-        f"{BASE_URL}/schedule?teamId={team_id}&startDate={today}&endDate={today}"
+        f"{BASE_URL}/schedule?sportId=1&teamId={team_id}&startDate={today}&endDate={today}"
     )
     for date in res.json().get("dates", []):
         for game in date["games"]:
             if game["status"]["abstractGameState"] == "Live":
                 return game
     return None
+
+
+def get_live_game_details(team_id):
+    game = get_live_game(team_id)
+    if not game:
+        return None
+
+    gamePk = game["gamePk"]
+    res = requests.get(f"{BASE_URL}.1/game/{gamePk}/feed/live")
+
+    return res.json()
