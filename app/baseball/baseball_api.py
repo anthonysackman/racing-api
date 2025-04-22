@@ -43,37 +43,37 @@ def get_next_game(team_id):
 
 def get_live_game(team_id):
     today = datetime.today().strftime("%Y-%m-%d")
-    logger.debug(f"Fetching schedule for {today} and team ID {team_id}")
+    logger.warning(f"Fetching schedule for {today} and team ID {team_id}")
     res = requests.get(
         f"{BASE_URL}/schedule?sportId=1&teamId={team_id}&startDate={today}&endDate={today}"
     )
-    logger.debug(f"Schedule response: {res.status_code}")
+    logger.warning(f"Schedule response: {res.status_code}")
     schedule = res.json()
-    logger.debug(f"Schedule data: {schedule}")
+    logger.warning(f"Schedule data: {schedule}")
 
     for date in schedule.get("dates", []):
         for game in date.get("games", []):
             status = game.get("status", {})
-            logger.debug(f"Checking gamePk={game.get('gamePk')}, status={status}")
+            logger.warning(f"Checking gamePk={game.get('gamePk')}, status={status}")
             if status.get("abstractGameState") in ["Live", "In Progress"]:
-                logger.info(f"Found live game: {game}")
+                logger.warning(f"Found live game: {game}")
                 return game
 
-    logger.info("No live game found.")
+    logger.warning("No live game found.")
     return None
 
 
 def get_live_game_details(team_id):
-    logger.info(f"Getting live game details for team ID: {team_id}")
+    logger.warning(f"Getting live game details for team ID: {team_id}")
     game = get_live_game(team_id)
     if not game:
         logger.warning("No live game returned from get_live_game")
         return None
 
     gamePk = game.get("gamePk")
-    logger.debug(f"Fetching live data for gamePk: {gamePk}")
+    logger.warning(f"Fetching live data for gamePk: {gamePk}")
     res = requests.get(f"https://statsapi.mlb.com/api/v1.1/game/{gamePk}/feed/live")
-    logger.debug(f"Feed response status: {res.status_code}")
+    logger.warning(f"Feed response status: {res.status_code}")
     data = res.json()
 
     latest_play = data["liveData"]["plays"]["allPlays"][-1]
