@@ -1,5 +1,9 @@
 import requests
 from datetime import datetime, timedelta
+import logging
+
+logger = logging.getLogger("baseball")
+logger.setLevel(logging.DEBUG)
 
 BASE_URL = "https://statsapi.mlb.com/api/v1"
 
@@ -39,24 +43,37 @@ def get_next_game(team_id):
 
 def get_live_game(team_id):
     today = datetime.today().strftime("%Y-%m-%d")
+    logger.debug(f"Fetching schedule for {today} and team ID {team_id}")
     res = requests.get(
         f"{BASE_URL}/schedule?sportId=1&teamId={team_id}&startDate={today}&endDate={today}"
     )
-    for date in res.json().get("dates", []):
-        for game in date["games"]:
+    logger.debug(f"Schedule response: {res.status_code}")
+    schedule = res.json()
+    logger.debug(f"Schedule data: {schedule}")
+
+    for date in schedule.get("dates", []):
+        for game in date.get("games", []):
             status = game.get("status", {})
+            logger.debug(f"Checking gamePk={game.get('gamePk')}, status={status}")
             if status.get("abstractGameState") in ["Live", "In Progress"]:
+                logger.info(f"Found live game: {game}")
                 return game
+
+    logger.info("No live game found.")
     return None
 
 
 def get_live_game_details(team_id):
+    logger.info(f"Getting live game details for team ID: {team_id}")
     game = get_live_game(team_id)
     if not game:
+        logger.warning("No live game returned from get_live_game")
         return None
 
     gamePk = game.get("gamePk")
+    logger.debug(f"Fetching live data for gamePk: {gamePk}")
     res = requests.get(f"https://statsapi.mlb.com/api/v1.1/game/{gamePk}/feed/live")
+    logger.debug(f"Feed response status: {res.status_code}")
     data = res.json()
 
     latest_play = data["liveData"]["plays"]["allPlays"][-1]
@@ -76,15 +93,14 @@ def get_live_game_details(team_id):
             break
 
     if not pitch:
+        logger.warning("No pitch data found in any plays")
         return None
 
-    # Team names and score
     home_team = data["gameData"]["teams"]["home"]["name"]
     away_team = data["gameData"]["teams"]["away"]["name"]
     home_score = latest_play["result"]["homeScore"]
     away_score = latest_play["result"]["awayScore"]
 
-    # Count and inning info
     count = latest_play["count"]
     balls = count["balls"]
     strikes = count["strikes"]
@@ -92,7 +108,6 @@ def get_live_game_details(team_id):
     inning = latest_play["about"]["inning"]
     half_inning = "Top" if latest_play["about"]["isTopInning"] else "Bottom"
 
-    # Batter stats
     player_res = requests.get(
         f"https://statsapi.mlb.com/api/v1/people/{batter_id}?hydrate=stats(group=[hitting],type=[season])"
     )
@@ -105,7 +120,6 @@ def get_live_game_details(team_id):
         .get("avg", "N/A")
     )
 
-    # Rebuild today's line
     at_bats = 0
     hits = 0
     last_result = ""
@@ -130,6 +144,7 @@ def get_live_game_details(team_id):
             last_result = event
         if event_type in ["single", "double", "triple", "home_run"]:
             hits += 1
+
     todays_line = f"{hits}-for-{at_bats}"
     if last_result:
         todays_line += f", {last_result.lower()}"
