@@ -157,11 +157,13 @@ def get_live_game_details(team_id):
     zone_top = pitch["pitchData"]["strikeZoneTop"]
     zone_bottom = pitch["pitchData"]["strikeZoneBottom"]
 
-    def map_to_zone(x, y, top, bottom, zone_width=3.0, out_width=20, out_height=25):
-        col = int((x + zone_width / 2) / zone_width * out_width)
-        col = max(0, min(out_width - 1, col))
-        row = int((1 - (y - bottom) / (top - bottom)) * out_height)
-        row = max(0, min(out_height - 1, row))
+    def map_to_zone(
+        x, y, top, bottom, zone_width=3.0, strike_width=10, strike_height=15
+    ):
+        col = int((x + zone_width / 2) / zone_width * strike_width)
+        col = max(0, min(strike_width - 1, col))
+        row = int((1 - (y - bottom) / (top - bottom)) * strike_height)
+        row = max(0, min(strike_height - 1, row))
         return col, row
 
     col, row = map_to_zone(x, y, zone_top, zone_bottom)
