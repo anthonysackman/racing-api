@@ -1,6 +1,7 @@
 import requests
 from datetime import datetime, timedelta
 import logging
+import pytz
 
 logger = logging.getLogger("baseball")
 logger.setLevel(logging.DEBUG)
@@ -42,7 +43,8 @@ def get_next_game(team_id):
 
 
 def get_live_game(team_id):
-    today = datetime.today().strftime("%Y-%m-%d")
+    pacific = pytz.timezone("US/Pacific")
+    today = datetime.now(pacific).strftime("%Y-%m-%d")
     logger.warning(f"Fetching schedule for {today} and team ID {team_id}")
     res = requests.get(
         f"{BASE_URL}/schedule?sportId=1&teamId={team_id}&startDate={today}&endDate={today}"
