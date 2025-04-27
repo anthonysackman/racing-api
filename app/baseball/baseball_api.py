@@ -166,8 +166,12 @@ def get_live_game_details(team_id):
 
     col, row = map_to_zone(x, y, zone_top, zone_bottom)
 
-    home_team = data["gameData"]["teams"]["home"]["name"]
-    away_team = data["gameData"]["teams"]["away"]["name"]
+    def get_team_short_name(full_name):
+        parts = full_name.split(" ", 1)
+        return parts[1] if len(parts) > 1 else full_name
+
+    home_team = get_team_short_name(data["gameData"]["teams"]["home"]["name"])
+    away_team = get_team_short_name(data["gameData"]["teams"]["away"]["name"])
 
     return {
         "pitcher": pitcher,
