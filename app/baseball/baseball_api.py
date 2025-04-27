@@ -160,7 +160,7 @@ def get_live_game_details(team_id):
     def map_to_zone(
         x, y, top, bottom, zone_width=3.0, strike_width=10, strike_height=15
     ):
-        col = (x + zone_width / 2) / zone_width * strike_width
+        col = (zone_width / 2 - x) / zone_width * strike_width
         row = (1 - (y - bottom) / (top - bottom)) * strike_height
         return int(col), int(row)
 
