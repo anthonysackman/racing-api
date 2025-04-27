@@ -166,6 +166,9 @@ def get_live_game_details(team_id):
 
     col, row = map_to_zone(x, y, zone_top, zone_bottom)
 
+    home_team = data["gameData"]["teams"]["home"]["name"]
+    away_team = data["gameData"]["teams"]["away"]["name"]
+
     return {
         "pitcher": pitcher,
         "batter": batter,
@@ -178,4 +181,5 @@ def get_live_game_details(team_id):
         "score": {away_team: away_score, home_team: home_score},
         "batting_avg": batting_avg,
         "todays_line": todays_line,
+        "teams": {"home": home_team, "away": away_team},
     }
