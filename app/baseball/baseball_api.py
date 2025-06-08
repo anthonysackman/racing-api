@@ -263,4 +263,10 @@ def get_live_game_details(team_id):
         "score": {away_team: away_score, home_team: home_score},
         "teams": {"home": home_team, "away": away_team},
         "todays_line": todays_line,
+        "raw_pitch_type": pitch["details"]["type"]["description"],
+        "raw_outcome": pitch["details"]["description"],
+        "zone_top": zone_top,
+        "zone_bottom": zone_bottom,
+        "px": x,
+        "pz": y,
     }
