@@ -39,7 +39,6 @@ MLB_TEAMS = {
     146: {"name": "Brewers", "color": (1, 4, 12)},
     147: {"name": "Braves", "color": (1, 4, 12)},
     158: {"name": "Marlins", "color": (0, 6, 11)},
-    159: {"name": "Giants", "color": (15, 6, 0)},  # duplicate ID if needed
 }
 
 
