@@ -8,6 +8,44 @@ logger.setLevel(logging.DEBUG)
 
 BASE_URL = "https://statsapi.mlb.com/api/v1"
 
+MLB_TEAMS = {
+    108: {"name": "Angels", "color": (15, 0, 0)},
+    109: {"name": "Diamondbacks", "color": (13, 2, 2)},
+    110: {"name": "Orioles", "color": (15, 8, 0)},
+    111: {"name": "Red Sox", "color": (12, 2, 2)},
+    112: {"name": "Cubs", "color": (0, 6, 15)},
+    113: {"name": "Reds", "color": (15, 0, 0)},
+    114: {"name": "Guardians", "color": (0, 0, 12)},
+    115: {"name": "Rockies", "color": (4, 0, 13)},
+    116: {"name": "Tigers", "color": (4, 3, 15)},
+    117: {"name": "Astros", "color": (0, 3, 15)},
+    118: {"name": "Royals", "color": (1, 5, 15)},
+    119: {"name": "Dodgers", "color": (0, 6, 15)},
+    120: {"name": "Nationals", "color": (0, 0, 15)},
+    121: {"name": "Mets", "color": (1, 4, 15)},
+    133: {"name": "Athletics", "color": (0, 8, 0)},
+    134: {"name": "Phillies", "color": (15, 0, 0)},
+    135: {"name": "Pirates", "color": (0, 0, 0)},
+    136: {"name": "Padres", "color": (8, 5, 0)},
+    137: {"name": "Giants", "color": (15, 6, 0)},
+    138: {"name": "Mariners", "color": (0, 5, 3)},
+    139: {"name": "Cardinals", "color": (12, 1, 3)},
+    140: {"name": "Rays", "color": (5, 11, 11)},
+    141: {"name": "Rangers", "color": (0, 0, 15)},
+    142: {"name": "Blue Jays", "color": (0, 6, 15)},
+    143: {"name": "Twins", "color": (0, 0, 12)},
+    144: {"name": "White Sox", "color": (0, 0, 0)},
+    145: {"name": "Yankees", "color": (0, 0, 15)},
+    146: {"name": "Brewers", "color": (1, 4, 12)},
+    147: {"name": "Braves", "color": (1, 4, 12)},
+    158: {"name": "Marlins", "color": (0, 6, 11)},
+    159: {"name": "Giants", "color": (15, 6, 0)},  # duplicate ID if needed
+}
+
+
+def get_team_info(team_id):
+    return MLB_TEAMS.get(team_id, {"name": f"Team {team_id}", "color": (15, 15, 15)})
+
 
 def get_team_id_by_name(name):
     res = requests.get(f"{BASE_URL}/teams?sportId=1")
@@ -166,24 +204,30 @@ def get_live_game_details(team_id):
 
     col, row = map_to_zone(x, y, zone_top, zone_bottom)
 
-    def get_team_short_name(full_name):
-        parts = full_name.split(" ", 1)
-        return parts[1] if len(parts) > 1 else full_name
+    home_team_id = data["gameData"]["teams"]["home"]["id"]
+    away_team_id = data["gameData"]["teams"]["away"]["id"]
 
-    home_team = get_team_short_name(data["gameData"]["teams"]["home"]["name"])
-    away_team = get_team_short_name(data["gameData"]["teams"]["away"]["name"])
+    home_info = get_team_info(home_team_id)
+    away_info = get_team_info(away_team_id)
+
+    home_team = home_info["name"]
+    away_team = away_info["name"]
 
     return {
-        "pitcher": pitcher,
         "batter": batter,
-        "pitch_type": pitch["details"]["type"]["description"],
-        "pitch_speed": pitch["pitchData"].get("startSpeed", "N/A"),
-        "outcome": pitch["details"]["description"],
-        "matrix_location": {"x": col, "y": row},
+        "batting_avg": batting_avg,
+        "colors": {
+            "home": home_info["color"],
+            "away": away_info["color"],
+        },
         "count": {"balls": balls, "strikes": strikes, "outs": outs},
         "inning": {"half": half_inning, "number": inning},
+        "matrix_location": {"x": col, "y": row},
+        "outcome": pitch["details"]["description"],
+        "pitch_speed": pitch["pitchData"].get("startSpeed", "N/A"),
+        "pitch_type": pitch["details"]["type"]["description"],
+        "pitcher": pitcher,
         "score": {away_team: away_score, home_team: home_score},
-        "batting_avg": batting_avg,
-        "todays_line": todays_line,
         "teams": {"home": home_team, "away": away_team},
+        "todays_line": todays_line,
     }
