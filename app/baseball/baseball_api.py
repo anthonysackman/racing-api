@@ -41,6 +41,40 @@ MLB_TEAMS = {
     158: {"name": "Brewers", "color": (1, 4, 12)},
 }
 
+PITCH_TYPE_MAP = {
+    "Changeup": "Changeup",
+    "Curveball": "Curve",
+    "Cutter": "Cutter",
+    "Eephus": "Eephus",
+    "Fastball": "Fastball",
+    "Forkball": "Forkball",
+    "Four-Seam Fastball": "4-Seam Fastb",
+    "Knuckle Curve": "Knuck Curve",
+    "Sinker": "Sinker",
+    "Slider": "Slider",
+    "Slow Curve": "Slow Curve",
+    "Slurve": "Slurve",
+    "Splitter": "Splitter",
+    "Sweeper": "Sweeper",
+}
+
+PITCH_OUTCOME_MAP = {
+    "Ball": "Ball",
+    "Ball In Dirt": "Ball (Dirt)",
+    "Called Strike": "Called Strk",
+    "Foul": "Foul",
+    "Foul Bunt": "Foul Bunt",
+    "Foul Tip": "Foul Tip",
+    "Hit By Pitch": "HBP",
+    "In play, no out": "In Play - No",
+    "In play, out(s)": "In Play - Out",
+    "In play, run(s)": "In Play - Run",
+    "Missed Bunt": "Miss Bunt",
+    "Pitchout": "Pitchout",
+    "Swinging Strike": "Swing Strk",
+    "Swinging Strike (Blocked)": "Sw Strk (Blk)",
+}
+
 
 def get_team_info(team_id):
     return MLB_TEAMS.get(team_id, {"name": f"Team {team_id}", "color": (15, 15, 15)})
@@ -222,9 +256,9 @@ def get_live_game_details(team_id):
         "count": {"balls": balls, "strikes": strikes, "outs": outs},
         "inning": {"half": half_inning, "number": inning},
         "matrix_location": {"x": col, "y": row},
-        "outcome": pitch["details"]["description"],
+        "outcome": PITCH_OUTCOME_MAP[pitch["details"]["description"]],
         "pitch_speed": pitch["pitchData"].get("startSpeed", "N/A"),
-        "pitch_type": pitch["details"]["type"]["description"],
+        "pitch_type": PITCH_TYPE_MAP[pitch["details"]["type"]["description"]],
         "pitcher": pitcher,
         "score": {away_team: away_score, home_team: home_score},
         "teams": {"home": home_team, "away": away_team},
