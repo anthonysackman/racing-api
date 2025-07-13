@@ -1,0 +1,23 @@
+{
+  "mode": "auto",
+  "live_content_timeout": 120000,
+  "rotation_interval": 15000,
+  "sub_panel_duration_offset": 5000,
+  "panels": {
+    "baseball": {
+      "enabled": true,
+      "duration": 30000,
+      "priority": "live"
+    },
+    "nascar": {
+      "enabled": true,
+      "duration": 45000,
+      "priority": "live"
+    },
+    "dashboard": {
+      "enabled": true,
+      "duration": 15000,
+      "priority": "static"
+    }
+  }
+}
