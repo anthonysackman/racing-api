@@ -60,8 +60,8 @@ async def index(request: Request):
             <div class="panel-header">
                 <h3>{panel_name.title()} Panel</h3>
                 <div class="panel-status">
-                    <span class="status-dot active"></span>
-                    <span class="status-text">Active</span>
+                    <span class="status-dot {panel_config.get("enabled", True) and "active" or "inactive"}"></span>
+                    <span class="status-text">{panel_config.get("enabled", True) and "Enabled" or "Disabled"}</span>
                 </div>
             </div>
             <div class="panel-controls">
@@ -290,10 +290,18 @@ async def index(request: Request):
                 background: #27ae60;
             }}
             
+            .status-dot.inactive {{
+                background: #95a5a6;
+            }}
+            
             .status-text {{
                 font-size: 0.9em;
                 color: #27ae60;
                 font-weight: 600;
+            }}
+            
+            .status-dot.inactive + .status-text {{
+                color: #95a5a6;
             }}
             
             .panel-controls {{
@@ -700,56 +708,39 @@ async def get_status(request: Request):
 @index_bp.get("/preview")
 async def data_preview(request: Request):
     """Data preview interface for testing and viewing live data"""
-    # Get device ID from query param or default to baseball_1
-    device_id = request.args.get("device", "baseball_1")
-
-    # Get all devices for the selector
-    all_devices = config_manager.get_all_devices()
-
-    # Generate device selector options
-    device_options = "\n".join(
-        f'<option value="{dev_id}"{" selected" if dev_id == device_id else ""}>{dev_id}</option>'
-        for dev_id in all_devices.keys()
-    )
-
-    # MLB Teams for dropdown
+    
+    # MLB Teams for dropdown (sorted alphabetically)
     mlb_teams = [
-        {"id": 119, "name": "Los Angeles Dodgers"},
-        {"id": 147, "name": "New York Yankees"},
-        {"id": 111, "name": "Boston Red Sox"},
-        {"id": 110, "name": "Baltimore Orioles"},
-        {"id": 141, "name": "Toronto Blue Jays"},
-        {"id": 139, "name": "Tampa Bay Rays"},
-        {"id": 145, "name": "Chicago White Sox"},
-        {"id": 114, "name": "Cleveland Guardians"},
-        {"id": 116, "name": "Detroit Tigers"},
-        {"id": 118, "name": "Kansas City Royals"},
-        {"id": 142, "name": "Minnesota Twins"},
-        {"id": 117, "name": "Houston Astros"},
         {"id": 108, "name": "Los Angeles Angels"},
-        {"id": 133, "name": "Oakland Athletics"},
-        {"id": 136, "name": "Seattle Mariners"},
-        {"id": 140, "name": "Texas Rangers"},
-        {"id": 121, "name": "New York Mets"},
-        {"id": 143, "name": "Philadelphia Phillies"},
-        {"id": 120, "name": "Washington Nationals"},
-        {"id": 144, "name": "Atlanta Braves"},
-        {"id": 146, "name": "Miami Marlins"},
-        {"id": 121, "name": "New York Mets"},
-        {"id": 143, "name": "Philadelphia Phillies"},
-        {"id": 120, "name": "Washington Nationals"},
-        {"id": 144, "name": "Atlanta Braves"},
-        {"id": 146, "name": "Miami Marlins"},
+        {"id": 109, "name": "Arizona Diamondbacks"},
+        {"id": 110, "name": "Baltimore Orioles"},
+        {"id": 111, "name": "Boston Red Sox"},
         {"id": 112, "name": "Chicago Cubs"},
         {"id": 113, "name": "Cincinnati Reds"},
-        {"id": 158, "name": "Milwaukee Brewers"},
-        {"id": 134, "name": "Pittsburgh Pirates"},
-        {"id": 138, "name": "St. Louis Cardinals"},
-        {"id": 109, "name": "Arizona Diamondbacks"},
+        {"id": 114, "name": "Cleveland Guardians"},
         {"id": 115, "name": "Colorado Rockies"},
+        {"id": 116, "name": "Detroit Tigers"},
+        {"id": 117, "name": "Houston Astros"},
+        {"id": 118, "name": "Kansas City Royals"},
         {"id": 119, "name": "Los Angeles Dodgers"},
+        {"id": 120, "name": "Washington Nationals"},
+        {"id": 121, "name": "New York Mets"},
+        {"id": 133, "name": "Oakland Athletics"},
+        {"id": 134, "name": "Pittsburgh Pirates"},
         {"id": 135, "name": "San Diego Padres"},
+        {"id": 136, "name": "Seattle Mariners"},
         {"id": 137, "name": "San Francisco Giants"},
+        {"id": 138, "name": "St. Louis Cardinals"},
+        {"id": 139, "name": "Tampa Bay Rays"},
+        {"id": 140, "name": "Texas Rangers"},
+        {"id": 141, "name": "Toronto Blue Jays"},
+        {"id": 142, "name": "Minnesota Twins"},
+        {"id": 143, "name": "Philadelphia Phillies"},
+        {"id": 144, "name": "Atlanta Braves"},
+        {"id": 145, "name": "Chicago White Sox"},
+        {"id": 146, "name": "Miami Marlins"},
+        {"id": 147, "name": "New York Yankees"},
+        {"id": 158, "name": "Milwaukee Brewers"},
     ]
 
     # NASCAR Series for dropdown
@@ -761,7 +752,8 @@ async def data_preview(request: Request):
 
     # Generate MLB team options
     mlb_team_options = "\n".join(
-        f'<option value="{team["id"]}">{team["name"]}</option>' for team in mlb_teams
+        f'<option value="{team["name"]}">{team["name"]}</option>'
+        for team in mlb_teams
     )
 
     # Generate NASCAR series options
@@ -819,28 +811,6 @@ async def data_preview(request: Request):
             
             .content {{
                 padding: 40px;
-            }}
-            
-            .device-selector {{
-                background: #ecf0f1;
-                padding: 20px;
-                border-radius: 10px;
-                margin-bottom: 30px;
-                text-align: center;
-            }}
-            
-            .device-selector h3 {{
-                color: #2c3e50;
-                margin-bottom: 15px;
-            }}
-            
-            .device-selector select {{
-                padding: 10px 15px;
-                border: 2px solid #e1e8ed;
-                border-radius: 8px;
-                font-size: 16px;
-                background: white;
-                min-width: 200px;
             }}
             
             .nav-tabs {{
@@ -932,10 +902,12 @@ async def data_preview(request: Request):
             .btn-primary {{
                 background: #3498db;
                 color: white;
+                border: 2px solid #3498db;
             }}
             
             .btn-primary:hover {{
                 background: #2980b9;
+                border-color: #2980b9;
                 transform: translateY(-2px);
             }}
             
@@ -1035,17 +1007,8 @@ async def data_preview(request: Request):
             
             <div class="content">
                 <div class="nav-links">
-                    <a href="/?device={device_id}" class="active">⚙️ Configuration</a>
-                    <a href="/preview?device={device_id}">📊 Data Preview</a>
-                </div>
-                
-                <div class="device-selector">
-                    <h3>📱 Select Device</h3>
-                    <form method="GET" action="/preview">
-                        <select name="device" id="device" onchange="this.form.submit()">
-                            {device_options}
-                        </select>
-                    </form>
+                    <a href="/">⚙️ Configuration</a>
+                    <a href="/preview" class="active">📊 Data Preview</a>
                 </div>
                 
                 <div class="nav-tabs">
@@ -1093,9 +1056,10 @@ async def data_preview(request: Request):
                         <div class="control-group">
                             <label>Data Type:</label>
                             <select id="nascar-data-type">
-                                <option value="schedule">Schedule</option>
                                 <option value="standings">Standings</option>
-                                <option value="live">Live Data</option>
+                                <option value="race">Upcoming Race</option>
+                                <option value="last">Last Race</option>
+                                <option value="live">Live Race</option>
                             </select>
                         </div>
                         <div class="control-group">
@@ -1132,9 +1096,8 @@ async def data_preview(request: Request):
             }}
             
             function fetchMLBData() {{
-                const teamId = document.getElementById('mlb-team').value;
+                const teamName = document.getElementById('mlb-team').value;
                 const dataType = document.getElementById('mlb-data-type').value;
-                const deviceId = '{device_id}';
                 
                 const dataDiv = document.getElementById('mlb-data');
                 dataDiv.innerHTML = '<h3>⚾ Baseball Data</h3><div class="loading">Loading...</div>';
@@ -1142,24 +1105,20 @@ async def data_preview(request: Request):
                 let endpoint = '';
                 switch(dataType) {{
                     case 'last':
-                        endpoint = `/baseball/last/${{teamId}}`;
+                        endpoint = `/baseball/last/${{encodeURIComponent(teamName)}}`;
                         break;
                     case 'next':
-                        endpoint = `/baseball/next/${{teamId}}`;
+                        endpoint = `/baseball/next/${{encodeURIComponent(teamName)}}`;
                         break;
                     case 'live':
-                        endpoint = `/baseball/live/${{teamId}}`;
+                        endpoint = `/baseball/live/${{encodeURIComponent(teamName)}}`;
                         break;
                     case 'live-details':
-                        endpoint = `/baseball/live/${{teamId}}/details`;
+                        endpoint = `/baseball/live/${{encodeURIComponent(teamName)}}/details`;
                         break;
                 }}
                 
-                fetch(endpoint, {{
-                    headers: {{
-                        'X-Device-ID': deviceId
-                    }}
-                }})
+                fetch(endpoint)
                 .then(response => response.json())
                 .then(data => {{
                     displayData(dataDiv, data, 'Baseball');
@@ -1172,29 +1131,27 @@ async def data_preview(request: Request):
             function fetchNASCARData() {{
                 const series = document.getElementById('nascar-series').value;
                 const dataType = document.getElementById('nascar-data-type').value;
-                const deviceId = '{device_id}';
                 
                 const dataDiv = document.getElementById('nascar-data');
                 dataDiv.innerHTML = '<h3>🏁 NASCAR Data</h3><div class="loading">Loading...</div>';
                 
                 let endpoint = '';
                 switch(dataType) {{
-                    case 'schedule':
-                        endpoint = `/nascar/schedule/${{series}}`;
-                        break;
                     case 'standings':
-                        endpoint = `/nascar/standings/${{series}}`;
+                        endpoint = `/nascar/standings/${{series === 'cup' ? '1' : series === 'xfinity' ? '2' : '3'}}`;
+                        break;
+                    case 'race':
+                        endpoint = `/nascar/race/${{series === 'cup' ? '1' : series === 'xfinity' ? '2' : '3'}}`;
+                        break;
+                    case 'last':
+                        endpoint = `/nascar/race/last/${{series === 'cup' ? '1' : series === 'xfinity' ? '2' : '3'}}`;
                         break;
                     case 'live':
-                        endpoint = `/nascar/live/${{series}}`;
+                        endpoint = `/nascar/race/live`;
                         break;
                 }}
                 
-                fetch(endpoint, {{
-                    headers: {{
-                        'X-Device-ID': deviceId
-                    }}
-                }})
+                fetch(endpoint)
                 .then(response => response.json())
                 .then(data => {{
                     displayData(dataDiv, data, 'NASCAR');
