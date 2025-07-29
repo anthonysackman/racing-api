@@ -58,7 +58,7 @@ async def index(request: Request):
         panel_configs += f"""
         <div class="panel-config">
             <div class="panel-header">
-                <h3>{panel_name.title()} Panel</h3>
+            <h3>{panel_name.title()} Panel</h3>
                 <div class="panel-status">
                     <span class="status-dot {panel_config.get("enabled", True) and "active" or "inactive"}"></span>
                     <span class="status-text">{panel_config.get("enabled", True) and "Enabled" or "Disabled"}</span>
@@ -67,26 +67,26 @@ async def index(request: Request):
             <div class="panel-controls">
                 <div class="control-group">
                     <label class="checkbox-label">
-                        <input type="checkbox" name="panels.{panel_name}.enabled" {enabled_checked}>
+                    <input type="checkbox" name="panels.{panel_name}.enabled" {enabled_checked}>
                         <span class="checkmark"></span>
-                        Enabled
-                    </label>
-                </div>
+                    Enabled
+                </label>
+            </div>
                 <div class="control-group">
-                    <label>Duration (seconds):</label>
-                    <input type="number" name="panels.{panel_name}.duration" value="{duration_value}" min="5" max="300">
-                </div>
+                <label>Duration (seconds):</label>
+                <input type="number" name="panels.{panel_name}.duration" value="{duration_value}" min="5" max="300">
+            </div>
                 <div class="control-group">
-                    <label>Priority:</label>
-                    <select name="panels.{panel_name}.priority">
-                        {priority_options}
-                    </select>
+                <label>Priority:</label>
+                <select name="panels.{panel_name}.priority">
+                    {priority_options}
+                </select>
                 </div>
             </div>
         </div>
         """
 
-    # Timing configuration
+        # Timing configuration
     timing_config = {
         "live_content_timeout": config.get("live_content_timeout", 120000),
         "rotation_interval": config.get("rotation_interval", 15000),
@@ -486,78 +486,78 @@ async def index(request: Request):
                 <div class="main-grid">
                     <div class="status-panel">
                         <h2>📊 Device Status</h2>
-                        <div class="status-item">
+                    <div class="status-item">
                             <span class="status-label">Device ID</span>
                             <span class="status-value">{device_id}</span>
-                        </div>
-                        <div class="status-item">
+                    </div>
+                    <div class="status-item">
                             <span class="status-label">Display Mode</span>
                             <span class="status-value">{config.get("mode", "auto").title()}</span>
-                        </div>
-                        <div class="status-item">
+                    </div>
+                    <div class="status-item">
                             <span class="status-label">Rotation Interval</span>
                             <span class="status-value">{int(timing_config.get("rotation_interval", 15000)) // 1000}s</span>
-                        </div>
-                        <div class="status-item">
+                    </div>
+                    <div class="status-item">
                             <span class="status-label">Live Timeout</span>
                             <span class="status-value">{int(timing_config.get("live_content_timeout", 120000)) // 1000}s</span>
                         </div>
                         <div class="status-item">
                             <span class="status-label">Sub-panel Offset</span>
                             <span class="status-value">{int(timing_config.get("sub_panel_duration_offset", 5000)) // 1000}s</span>
-                        </div>
                     </div>
-                    
+                </div>
+                
                     <div class="config-panel">
                         <h2>🎛️ Configuration</h2>
-                        <form action="/save_config" method="POST">
+                <form action="/save_config" method="POST">
                             <input type="hidden" name="device_id" value="{device_id}">
                             
-                            <div class="form-group">
-                                <label for="mode">Display Mode:</label>
-                                <select name="mode" id="mode">
-                                    {mode_options}
-                                </select>
-                                <small style="color: #7f8c8d; margin-top: 5px; display: block;">
-                                    <strong>Auto:</strong> Automatically rotate between panels based on live content<br>
-                                    <strong>Manual:</strong> Manual control of panel selection<br>
-                                    <strong>Demo:</strong> Demo mode for testing
-                                </small>
-                            </div>
-                            
+                        <div class="form-group">
+                            <label for="mode">Display Mode:</label>
+                            <select name="mode" id="mode">
+                                {mode_options}
+                            </select>
+                            <small style="color: #7f8c8d; margin-top: 5px; display: block;">
+                                <strong>Auto:</strong> Automatically rotate between panels based on live content<br>
+                                <strong>Manual:</strong> Manual control of panel selection<br>
+                                <strong>Demo:</strong> Demo mode for testing
+                            </small>
+                    </div>
+                    
                             <div class="form-group">
                                 <label>Timing Configuration:</label>
                                 <div class="timing-grid">
                                     <div>
-                                        <label>Live Content Timeout (seconds):</label>
-                                        <input type="number" name="live_content_timeout" 
+                                <label>Live Content Timeout (seconds):</label>
+                                <input type="number" name="live_content_timeout" 
                                                value="{timing_config.get("live_content_timeout", 120000) // 1000}" 
-                                               min="30" max="600" step="30">
-                                    </div>
-                                    <div>
-                                        <label>Rotation Interval (seconds):</label>
-                                        <input type="number" name="rotation_interval" 
-                                               value="{timing_config.get("rotation_interval", 15000) // 1000}" 
-                                               min="5" max="120" step="5">
-                                    </div>
-                                    <div>
-                                        <label>Sub-panel Duration Offset (seconds):</label>
-                                        <input type="number" name="sub_panel_duration_offset" 
-                                               value="{timing_config.get("sub_panel_duration_offset", 5000) // 1000}" 
-                                               min="1" max="30" step="1">
-                                    </div>
-                                </div>
+                                       min="30" max="600" step="30">
                             </div>
-                            
+                                    <div>
+                                <label>Rotation Interval (seconds):</label>
+                                <input type="number" name="rotation_interval" 
+                                               value="{timing_config.get("rotation_interval", 15000) // 1000}" 
+                                       min="5" max="120" step="5">
+                            </div>
+                                    <div>
+                                <label>Sub-panel Duration Offset (seconds):</label>
+                                <input type="number" name="sub_panel_duration_offset" 
+                                               value="{timing_config.get("sub_panel_duration_offset", 5000) // 1000}" 
+                                       min="1" max="30" step="1">
+                            </div>
+                        </div>
+                    </div>
+                    
                             <div class="form-group">
                                 <label>Panel Configuration:</label>
-                                {panel_configs}
-                            </div>
-                            
+                        {panel_configs}
+                    </div>
+                    
                             <div style="text-align: center; margin-top: 20px;">
-                                <button type="submit" class="btn btn-success">💾 Save Configuration</button>
-                            </div>
-                        </form>
+                        <button type="submit" class="btn btn-success">💾 Save Configuration</button>
+                    </div>
+                </form>
                     </div>
                 </div>
                 
@@ -709,38 +709,38 @@ async def get_status(request: Request):
 async def data_preview(request: Request):
     """Data preview interface for testing and viewing live data"""
     
-    # MLB Teams for dropdown (sorted alphabetically)
+    # MLB Teams for dropdown (sorted alphabetically) - using the names that match the API
     mlb_teams = [
-        {"id": 108, "name": "Los Angeles Angels"},
-        {"id": 109, "name": "Arizona Diamondbacks"},
-        {"id": 110, "name": "Baltimore Orioles"},
-        {"id": 111, "name": "Boston Red Sox"},
-        {"id": 112, "name": "Chicago Cubs"},
-        {"id": 113, "name": "Cincinnati Reds"},
-        {"id": 114, "name": "Cleveland Guardians"},
-        {"id": 115, "name": "Colorado Rockies"},
-        {"id": 116, "name": "Detroit Tigers"},
-        {"id": 117, "name": "Houston Astros"},
-        {"id": 118, "name": "Kansas City Royals"},
-        {"id": 119, "name": "Los Angeles Dodgers"},
-        {"id": 120, "name": "Washington Nationals"},
-        {"id": 121, "name": "New York Mets"},
-        {"id": 133, "name": "Oakland Athletics"},
-        {"id": 134, "name": "Pittsburgh Pirates"},
-        {"id": 135, "name": "San Diego Padres"},
-        {"id": 136, "name": "Seattle Mariners"},
-        {"id": 137, "name": "San Francisco Giants"},
-        {"id": 138, "name": "St. Louis Cardinals"},
-        {"id": 139, "name": "Tampa Bay Rays"},
-        {"id": 140, "name": "Texas Rangers"},
-        {"id": 141, "name": "Toronto Blue Jays"},
-        {"id": 142, "name": "Minnesota Twins"},
-        {"id": 143, "name": "Philadelphia Phillies"},
-        {"id": 144, "name": "Atlanta Braves"},
-        {"id": 145, "name": "Chicago White Sox"},
-        {"id": 146, "name": "Miami Marlins"},
-        {"id": 147, "name": "New York Yankees"},
-        {"id": 158, "name": "Milwaukee Brewers"},
+        {"name": "Angels"},
+        {"name": "D-backs"}, 
+        {"name": "Orioles"},
+        {"name": "Red Sox"},
+        {"name": "Cubs"},
+        {"name": "Reds"},
+        {"name": "Guardians"},
+        {"name": "Rockies"},
+        {"name": "Tigers"},
+        {"name": "Astros"},
+        {"name": "Royals"},
+        {"name": "Dodgers"},
+        {"name": "Nationals"},
+        {"name": "Mets"},
+        {"name": "Athletics"},
+        {"name": "Pirates"},
+        {"name": "Padres"},
+        {"name": "Mariners"},
+        {"name": "Giants"},
+        {"name": "Cardinals"},
+        {"name": "Rays"},
+        {"name": "Rangers"},
+        {"name": "Blue Jays"},
+        {"name": "Twins"},
+        {"name": "Phillies"},
+        {"name": "Braves"},
+        {"name": "White Sox"},
+        {"name": "Marlins"},
+        {"name": "Yankees"},
+        {"name": "Brewers"},
     ]
 
     # NASCAR Series for dropdown
@@ -903,12 +903,14 @@ async def data_preview(request: Request):
                 background: #3498db;
                 color: white;
                 border: 2px solid #3498db;
+                box-shadow: 0 2px 4px rgba(52, 152, 219, 0.3);
             }}
             
             .btn-primary:hover {{
                 background: #2980b9;
                 border-color: #2980b9;
                 transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(52, 152, 219, 0.4);
             }}
             
             .btn-success {{
@@ -955,6 +957,10 @@ async def data_preview(request: Request):
             .data-value {{
                 color: #7f8c8d;
                 text-align: right;
+                max-width: 300px;
+                word-wrap: break-word;
+                font-family: 'Courier New', monospace;
+                font-size: 0.9em;
             }}
             
             .loading {{
@@ -995,6 +1001,29 @@ async def data_preview(request: Request):
             
             .nav-links a.active {{
                 background: #27ae60;
+            }}
+            
+            .data-table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 15px;
+            }}
+            
+            .data-table th,
+            .data-table td {{
+                padding: 8px 12px;
+                border: 1px solid #e1e8ed;
+                text-align: left;
+            }}
+            
+            .data-table th {{
+                background: #f8f9fa;
+                font-weight: 600;
+                color: #2c3e50;
+            }}
+            
+            .data-table tr:nth-child(even) {{
+                background: #f8f9fa;
             }}
         </style>
     </head>
@@ -1166,7 +1195,48 @@ async def data_preview(request: Request):
                 
                 if (data.error) {{
                     html += `<div class="error">${{data.error}}</div>`;
+                }} else if (Array.isArray(data)) {{
+                    // Format NASCAR standings data as a table
+                    if (data.length > 0 && data[0].first_name) {{
+                        html += `
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Pos</th>
+                                        <th>Driver</th>
+                                        <th>Car #</th>
+                                        <th>Points</th>
+                                        <th>Wins</th>
+                                        <th>Top 5</th>
+                                        <th>Top 10</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
+                        data.forEach((driver, index) => {{
+                            html += `
+                                <tr>
+                                    <td>${{driver.points_position || (index + 1)}}</td>
+                                    <td>${{driver.first_name}} ${{driver.last_name}}</td>
+                                    <td>${{driver.car_number}}</td>
+                                    <td>${{driver.points}}</td>
+                                    <td>${{driver.wins}}</td>
+                                    <td>${{driver.top_5}}</td>
+                                    <td>${{driver.top_10}}</td>
+                                </tr>
+                            `;
+                        }});
+                        html += '</tbody></table>';
+                    }} else {{
+                        // Fallback for other array data
+                        html += '<div class="data-items">';
+                        data.forEach((item, index) => {{
+                            html += `<div class="data-item"><span class="data-label">${{index}}:</span><span class="data-value">${{JSON.stringify(item, null, 2)}}</span></div>`;
+                        }});
+                        html += '</div>';
+                    }}
                 }} else {{
+                    // Format single object data
                     html += '<div class="data-items">';
                     for (const [key, value] of Object.entries(data)) {{
                         if (key !== 'status') {{
