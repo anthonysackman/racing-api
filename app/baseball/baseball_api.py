@@ -104,9 +104,18 @@ def get_team_id_by_name(name):
 
 
 def get_last_game(team_id):
-    today = datetime.today().strftime("%Y-%m-%d")
+    now = datetime.today()
+    today = now.strftime("%Y-%m-%d")
+
+    # Dynamic season detection
+    current_year = now.year
+    if now.month <= 2:  # Jan-Feb: use previous year (off-season)
+        season_start = f"{current_year - 1}-03-01"
+    else:  # Mar-Dec: use current year
+        season_start = f"{current_year}-03-01"
+
     res = requests.get(
-        f"{BASE_URL}/schedule?sportId=1&teamId={team_id}&startDate=2024-01-01&endDate={today}&limit=100"
+        f"{BASE_URL}/schedule?sportId=1&teamId={team_id}&startDate={season_start}&endDate={today}&limit=100"
     )
     for date in reversed(res.json().get("dates", [])):
         for game in date["games"]:
@@ -116,9 +125,14 @@ def get_last_game(team_id):
 
 
 def get_next_game(team_id):
-    tomorrow = (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d")
+    now = datetime.today()
+    tomorrow = (now + timedelta(days=1)).strftime("%Y-%m-%d")
+
+    # Search up to 30 days ahead to find next scheduled game
+    end_search = (now + timedelta(days=30)).strftime("%Y-%m-%d")
+
     res = requests.get(
-        f"{BASE_URL}/schedule?sportId=1&teamId={team_id}&startDate={tomorrow}&endDate={tomorrow}&limit=5"
+        f"{BASE_URL}/schedule?sportId=1&teamId={team_id}&startDate={tomorrow}&endDate={end_search}&limit=20"
     )
     for date in res.json().get("dates", []):
         for game in date["games"]:
