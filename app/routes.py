@@ -1025,6 +1025,33 @@ async def data_preview(request: Request):
             .data-table tr:nth-child(even) {{
                 background: #f8f9fa;
             }}
+            
+            .race-header {{
+                background: #3498db;
+                color: white;
+                padding: 15px;
+                border-radius: 8px;
+                margin-bottom: 15px;
+            }}
+            
+            .race-header h4 {{
+                margin: 0 0 10px 0;
+                font-size: 1.3em;
+            }}
+            
+            .race-header p {{
+                margin: 5px 0;
+                opacity: 0.9;
+            }}
+            
+            .race-comments {{
+                background: #e8f4fd;
+                padding: 15px;
+                border-radius: 8px;
+                margin-top: 15px;
+                border-left: 4px solid #3498db;
+                font-style: italic;
+            }}
         </style>
     </head>
     <body>
@@ -1206,23 +1233,60 @@ async def data_preview(request: Request):
                                         <th>Driver</th>
                                         <th>Car #</th>
                                         <th>Points</th>
+                                        <th>Delta</th>
                                         <th>Wins</th>
                                         <th>Top 5</th>
                                         <th>Top 10</th>
+                                        <th>Poles</th>
+                                        <th>Rookie</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                         `;
                         data.forEach((driver, index) => {{
+                            const delta = driver.delta_leader === 0 ? 'Leader' : `-${{driver.delta_leader}}`;
+                            const isRookie = driver.is_rookie ? '🟡' : '';
                             html += `
                                 <tr>
                                     <td>${{driver.points_position || (index + 1)}}</td>
                                     <td>${{driver.first_name}} ${{driver.last_name}}</td>
-                                    <td>${{driver.car_number}}</td>
+                                    <td>#${{driver.car_number}}</td>
                                     <td>${{driver.points}}</td>
+                                    <td>${{delta}}</td>
                                     <td>${{driver.wins}}</td>
                                     <td>${{driver.top_5}}</td>
                                     <td>${{driver.top_10}}</td>
+                                    <td>${{driver.poles}}</td>
+                                    <td>${{isRookie}}</td>
+                                </tr>
+                            `;
+                        }});
+                        html += '</tbody></table>';
+                    }} else if (data.length > 0 && data[0].driver_name) {{
+                        // Format live race data
+                        html += `
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Pos</th>
+                                        <th>Driver</th>
+                                        <th>Car #</th>
+                                        <th>Laps</th>
+                                        <th>Last Lap Time</th>
+                                        <th>Last Lap Speed</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
+                        data.forEach((vehicle) => {{
+                            html += `
+                                <tr>
+                                    <td>${{vehicle.position}}</td>
+                                    <td>${{vehicle.driver_name}}</td>
+                                    <td>#${{vehicle.vehicle_number}}</td>
+                                    <td>${{vehicle.laps_completed}}</td>
+                                    <td>${{vehicle.last_lap_time ? vehicle.last_lap_time.toFixed(3) : 'N/A'}}</td>
+                                    <td>${{vehicle.last_lap_speed ? vehicle.last_lap_speed.toFixed(2) + ' mph' : 'N/A'}}</td>
                                 </tr>
                             `;
                         }});
@@ -1235,6 +1299,117 @@ async def data_preview(request: Request):
                         }});
                         html += '</div>';
                     }}
+                }} else if (data.race_name) {{
+                    // Format race data (upcoming or past)
+                    const isUpcoming = data.is_next_race;
+                    const isPast = data.is_last_race;
+                    
+                    html += `
+                        <div class="race-header">
+                            <h4>${{data.race_name}} ${{{isUpcoming ? '(Upcoming)' : isPast ? '(Past)' : ''}}}</h4>
+                            <p><strong>Track:</strong> ${{data.track_name}}</p>
+                            <p><strong>Date:</strong> ${{data.race_date_formatted}}</p>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    if (isPast) {{
+                        // Past race details
+                        html += `
+                            <tr><td>Winner</td><td>${{data.winner_name || 'TBD'}}</td></tr>
+                            <tr><td>Margin of Victory</td><td>${{data.margin_of_victory || 'N/A'}}</td></tr>
+                            <tr><td>Total Race Time</td><td>${{data.total_race_time || 'N/A'}}</td></tr>
+                            <tr><td>Average Speed</td><td>${{data.average_speed ? data.average_speed.toFixed(3) + ' mph' : 'N/A'}}</td></tr>
+                            <tr><td>Lead Changes</td><td>${{data.number_of_lead_changes}}</td></tr>
+                            <tr><td>Cautions</td><td>${{data.number_of_cautions}} for ${{data.number_of_caution_laps}} laps</td></tr>
+                            <tr><td>Pole Winner Speed</td><td>${{data.pole_winner_speed ? data.pole_winner_speed.toFixed(3) + ' mph' : 'N/A'}}</td></tr>
+                        `;
+                    }} else {{
+                        // Upcoming race details
+                        html += `
+                            <tr><td>Scheduled Distance</td><td>${{data.scheduled_distance}} miles</td></tr>
+                            <tr><td>Scheduled Laps</td><td>${{data.scheduled_laps}}</td></tr>
+                            <tr><td>Stage Lengths</td><td>${{data.stage_1_laps}}/${{data.stage_2_laps}}/${{data.stage_3_laps}} laps</td></tr>
+                            <tr><td>Cars in Field</td><td>${{data.number_of_cars_in_field}}</td></tr>
+                            <tr><td>TV Broadcaster</td><td>${{data.television_broadcaster}}</td></tr>
+                            <tr><td>Radio Broadcaster</td><td>${{data.radio_broadcaster}}</td></tr>
+                        `;
+                    }}
+                    
+                    html += `
+                            </tbody>
+                        </table>
+                    `;
+                    
+                    if (data.race_comments) {{
+                        html += `<div class="race-comments"><strong>Comments:</strong> ${{data.race_comments}}</div>`;
+                    }}
+                    
+                }} else if (data.lap_number !== undefined) {{
+                    // Format live race data (main race info)
+                    html += `
+                        <div class="race-header">
+                            <h4>${{data.run_name}} - Live</h4>
+                            <p><strong>Track:</strong> ${{data.track_name}} (${{data.track_length}} miles)</p>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>Current Lap</td><td>${{data.lap_number}} of ${{data.laps_in_race}}</td></tr>
+                                <tr><td>Laps to Go</td><td>${{data.laps_to_go}}</td></tr>
+                                <tr><td>Flag State</td><td>${{data.flag_state === 1 ? '🟢 Green' : data.flag_state === 2 ? '🟡 Yellow' : data.flag_state === 9 ? '🏁 Checkered' : 'Unknown'}}</td></tr>
+                                <tr><td>Stage</td><td>${{data.stage ? `Stage ${{data.stage.stage_num}} (Lap ${{data.stage.finish_at_lap}})` : 'N/A'}}</td></tr>
+                                <tr><td>Lead Changes</td><td>${{data.number_of_lead_changes}}</td></tr>
+                                <tr><td>Leaders</td><td>${{data.number_of_leaders}}</td></tr>
+                                <tr><td>Cautions</td><td>${{data.number_of_caution_segments}} for ${{data.number_of_caution_laps}} laps</td></tr>
+                                <tr><td>Time</td><td>${{data.time_of_day_os_formatted}}</td></tr>
+                            </tbody>
+                        </table>
+                        
+                        <h4 style="margin-top: 20px;">Top 3 Positions</h4>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Pos</th>
+                                    <th>Driver</th>
+                                    <th>Car #</th>
+                                    <th>Laps</th>
+                                    <th>Last Lap Time</th>
+                                    <th>Last Lap Speed</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    if (data.vehicles && data.vehicles.length > 0) {{
+                        data.vehicles.slice(0, 3).forEach((vehicle) => {{
+                            html += `
+                                <tr>
+                                    <td>${{vehicle.position}}</td>
+                                    <td>${{vehicle.driver_name}}</td>
+                                    <td>#${{vehicle.vehicle_number}}</td>
+                                    <td>${{vehicle.laps_completed}}</td>
+                                    <td>${{vehicle.last_lap_time ? vehicle.last_lap_time.toFixed(3) : 'N/A'}}</td>
+                                    <td>${{vehicle.last_lap_speed ? vehicle.last_lap_speed.toFixed(2) + ' mph' : 'N/A'}}</td>
+                                </tr>
+                            `;
+                        }});
+                    }}
+                    
+                    html += '</tbody></table>';
+                    
                 }} else {{
                     // Format single object data
                     html += '<div class="data-items">';
