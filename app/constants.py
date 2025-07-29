@@ -36,25 +36,29 @@ CONFIG_FILE = Path(__file__).parent / "data" / "config.json"
 DEFAULT_MODE = DisplayMode.AUTO
 
 DEFAULT_CONFIG = {
-    "mode": DEFAULT_MODE.value,
-    "live_content_timeout": 120000,  # 2 minutes in milliseconds
-    "rotation_interval": 15000,  # 15 seconds in milliseconds
-    "sub_panel_duration_offset": 5000,  # 5 seconds in milliseconds
-    "panels": {
-        "baseball": {
-            "enabled": True,
-            "duration": 30000,  # 30 seconds
-            "priority": PanelPriority.LIVE.value,
-        },
-        "nascar": {
-            "enabled": True,
-            "duration": 45000,  # 45 seconds
-            "priority": PanelPriority.LIVE.value,
-        },
-        "dashboard": {
-            "enabled": True,
-            "duration": 15000,  # 15 seconds
-            "priority": PanelPriority.STATIC.value,
-        },
-    },
+    "devices": {
+        "baseball_1": {
+            "mode": DEFAULT_MODE.value,
+            "live_content_timeout": 120000,  # 2 minutes in milliseconds
+            "rotation_interval": 15000,  # 15 seconds in milliseconds
+            "sub_panel_duration_offset": 5000,  # 5 seconds in milliseconds
+            "panels": {
+                "baseball": {
+                    "enabled": True,
+                    "duration": 30000,  # 30 seconds
+                    "priority": PanelPriority.LIVE.value,
+                },
+                "nascar": {
+                    "enabled": True,
+                    "duration": 45000,  # 45 seconds
+                    "priority": PanelPriority.LIVE.value,
+                },
+                "dashboard": {
+                    "enabled": True,
+                    "duration": 15000,  # 15 seconds
+                    "priority": PanelPriority.STATIC.value,
+                },
+            },
+        }
+    }
 }

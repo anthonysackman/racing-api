@@ -12,11 +12,24 @@ index_bp = Blueprint("index", url_prefix="/")
 @index_bp.get("/")
 async def index(request: Request):
     """Main configuration interface"""
-    config = config_manager.get_config()
+    # Get device ID from query param or default to baseball_1
+    device_id = request.args.get("device", "baseball_1")
+
+    # Get all devices for the selector
+    all_devices = config_manager.get_all_devices()
+
+    # Get config for selected device
+    config = config_manager.get_device_config(device_id)
+
+    # Generate device selector options
+    device_options = "\n".join(
+        f'<option value="{dev_id}"{" selected" if dev_id == device_id else ""}>{dev_id}</option>'
+        for dev_id in all_devices.keys()
+    )
 
     # Generate mode options
     mode_options = "\n".join(
-        f'<option value="{mode.value}"{" selected" if mode.value == config["mode"] else ""}>{mode.name.title()}</option>'
+        f'<option value="{mode.value}"{" selected" if mode.value == config.get("mode", "auto") else ""}>{mode.name.title()}</option>'
         for mode in DisplayMode
     )
 
@@ -54,8 +67,12 @@ async def index(request: Request):
         </div>
         """
 
-        # Timing configuration
-    timing_config = config_manager.get_timing_config() or {}
+    # Timing configuration
+    timing_config = {
+        "live_content_timeout": config.get("live_content_timeout", 120000),
+        "rotation_interval": config.get("rotation_interval", 15000),
+        "sub_panel_duration_offset": config.get("sub_panel_duration_offset", 5000),
+    }
 
     return response.html(f"""
     <!DOCTYPE html>
@@ -105,23 +122,21 @@ async def index(request: Request):
             }}
             
             .content {{
-                padding: 30px;
+                padding: 40px;
             }}
             
             .section {{
                 margin-bottom: 40px;
                 padding: 25px;
-                border: 1px solid #e1e8ed;
-                border-radius: 10px;
                 background: #f8f9fa;
+                border-radius: 10px;
+                border-left: 4px solid #3498db;
             }}
             
             .section h2 {{
                 color: #2c3e50;
                 margin-bottom: 20px;
                 font-size: 1.5em;
-                border-bottom: 2px solid #3498db;
-                padding-bottom: 10px;
             }}
             
             .form-group {{
@@ -132,45 +147,23 @@ async def index(request: Request):
                 display: block;
                 margin-bottom: 8px;
                 font-weight: 600;
-                color: #34495e;
+                color: #2c3e50;
             }}
             
-            .form-group input[type="text"],
-            .form-group input[type="number"],
+            .form-group input,
             .form-group select {{
                 width: 100%;
                 padding: 12px;
-                border: 2px solid #ddd;
+                border: 2px solid #e1e8ed;
                 border-radius: 8px;
                 font-size: 16px;
-                transition: border-color 0.3s ease;
+                transition: border-color 0.3s;
             }}
             
-            .form-group input[type="text"]:focus,
-            .form-group input[type="number"]:focus,
+            .form-group input:focus,
             .form-group select:focus {{
                 outline: none;
                 border-color: #3498db;
-                box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-            }}
-            
-            .form-group input[type="checkbox"] {{
-                margin-right: 10px;
-                transform: scale(1.2);
-            }}
-            
-            .panel-config {{
-                background: white;
-                padding: 20px;
-                border-radius: 8px;
-                margin-bottom: 20px;
-                border: 1px solid #ddd;
-            }}
-            
-            .panel-config h3 {{
-                color: #2c3e50;
-                margin-bottom: 15px;
-                font-size: 1.3em;
             }}
             
             .timing-grid {{
@@ -179,49 +172,66 @@ async def index(request: Request):
                 gap: 20px;
             }}
             
+            .panel-config {{
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+                border: 1px solid #e1e8ed;
+            }}
+            
+            .panel-config h3 {{
+                color: #2c3e50;
+                margin-bottom: 15px;
+                border-bottom: 2px solid #3498db;
+                padding-bottom: 8px;
+            }}
+            
             .btn {{
-                background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-                color: white;
-                padding: 15px 30px;
+                display: inline-block;
+                padding: 12px 24px;
+                margin: 5px;
                 border: none;
                 border-radius: 8px;
                 font-size: 16px;
                 font-weight: 600;
-                cursor: pointer;
-                transition: all 0.3s ease;
                 text-decoration: none;
-                display: inline-block;
-                margin: 5px;
-            }}
-            
-            .btn:hover {{
-                transform: translateY(-2px);
-                box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
-            }}
-            
-            .btn-secondary {{
-                background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+                cursor: pointer;
+                transition: all 0.3s;
             }}
             
             .btn-success {{
-                background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+                background: #27ae60;
+                color: white;
             }}
             
-            .status-bar {{
-                background: #ecf0f1;
-                padding: 15px;
-                border-radius: 8px;
-                margin-bottom: 20px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                flex-wrap: wrap;
+            .btn-success:hover {{
+                background: #229954;
+                transform: translateY(-2px);
+            }}
+            
+            .btn-secondary {{
+                background: #95a5a6;
+                color: white;
+            }}
+            
+            .btn-secondary:hover {{
+                background: #7f8c8d;
+                transform: translateY(-2px);
+            }}
+            
+            .status-grid {{
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+                margin-bottom: 30px;
             }}
             
             .status-item {{
-                text-align: center;
-                flex: 1;
-                min-width: 120px;
+                background: white;
+                padding: 15px;
+                border-radius: 8px;
+                border-left: 4px solid #3498db;
             }}
             
             .status-label {{
@@ -231,17 +241,16 @@ async def index(request: Request):
             }}
             
             .status-value {{
-                font-size: 1.1em;
+                font-size: 1.2em;
                 font-weight: 600;
                 color: #2c3e50;
             }}
             
             .api-links {{
-                margin-top: 20px;
+                margin-top: 40px;
                 padding: 20px;
-                background: #e8f4fd;
-                border-radius: 8px;
-                border-left: 4px solid #3498db;
+                background: #ecf0f1;
+                border-radius: 10px;
             }}
             
             .api-links h3 {{
@@ -250,49 +259,94 @@ async def index(request: Request):
             }}
             
             .api-links a {{
-                color: #3498db;
+                display: inline-block;
+                margin: 5px;
+                padding: 8px 16px;
+                background: #3498db;
+                color: white;
                 text-decoration: none;
-                margin-right: 20px;
-                padding: 8px 12px;
-                border-radius: 4px;
-                background: white;
-                border: 1px solid #3498db;
-                transition: all 0.3s ease;
+                border-radius: 5px;
+                font-size: 14px;
             }}
             
             .api-links a:hover {{
-                background: #3498db;
-                color: white;
+                background: #2980b9;
             }}
             
-            @media (max-width: 768px) {{
-                .timing-grid {{
-                    grid-template-columns: 1fr;
-                }}
-                
-                .status-bar {{
-                    flex-direction: column;
-                    gap: 10px;
-                }}
-                
-                .status-item {{
-                    min-width: auto;
-                }}
+            .device-selector {{
+                background: #ecf0f1;
+                padding: 20px;
+                border-radius: 10px;
+                margin-bottom: 30px;
+            }}
+            
+            .device-selector h3 {{
+                color: #2c3e50;
+                margin-bottom: 15px;
+            }}
+            
+            .device-controls {{
+                display: flex;
+                gap: 10px;
+                align-items: center;
+                margin-top: 15px;
+            }}
+            
+            .device-controls input {{
+                flex: 1;
+                padding: 8px 12px;
+                border: 2px solid #e1e8ed;
+                border-radius: 5px;
+            }}
+            
+            .device-controls button {{
+                padding: 8px 16px;
+                background: #3498db;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            }}
+            
+            .device-controls button:hover {{
+                background: #2980b9;
             }}
         </style>
     </head>
     <body>
         <div class="container">
             <div class="header">
-                <h1>🏈 Sports Matrix Display</h1>
-                <p>Configuration & Control Panel</p>
+                <h1>🏟️ Sports Matrix Display</h1>
+                <p>Multi-Device Configuration Panel</p>
             </div>
             
             <div class="content">
-                <div class="status-bar">
+                <div class="device-selector">
+                    <h3>📱 Device Selection</h3>
+                    <form method="GET" action="/">
+                        <div class="form-group">
+                            <label for="device">Select Device:</label>
+                            <select name="device" id="device" onchange="this.form.submit()">
+                                {device_options}
+                            </select>
+                        </div>
+                    </form>
+                    
+                    <div class="device-controls">
+                        <input type="text" id="newDeviceId" placeholder="New device ID (e.g., office_display)">
+                        <button onclick="addDevice()">➕ Add Device</button>
+                        <button onclick="removeDevice()" style="background: #e74c3c;">🗑️ Remove Device</button>
+                    </div>
+                </div>
+                
+                <div class="status-grid">
                     <div class="status-item">
-                        <div class="status-label">Current Mode</div>
-                        <div class="status-value">{config["mode"].title()}</div>
+                        <div class="status-label">Current Device</div>
+                        <div class="status-value">{device_id}</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Display Mode</div>
+                        <div class="status-value">{config.get("mode", "auto").title()}</div>
                     </div>
                     <div class="status-item">
                         <div class="status-label">Rotation Interval</div>
@@ -309,6 +363,8 @@ async def index(request: Request):
                 </div>
                 
                 <form action="/save_config" method="POST">
+                    <input type="hidden" name="device_id" value="{device_id}">
+                    
                     <div class="section">
                         <h2>🎛️ Display Mode</h2>
                         <div class="form-group">
@@ -330,21 +386,21 @@ async def index(request: Request):
                             <div class="form-group">
                                 <label>Live Content Timeout (seconds):</label>
                                 <input type="number" name="live_content_timeout" 
-                                       value="{timing_config["live_content_timeout"] // 1000}" 
+                                       value="{timing_config.get("live_content_timeout", 120000) // 1000}" 
                                        min="30" max="600" step="30">
                                 <small style="color: #7f8c8d;">How long to show live content before rotating</small>
                             </div>
                             <div class="form-group">
                                 <label>Rotation Interval (seconds):</label>
                                 <input type="number" name="rotation_interval" 
-                                       value="{timing_config["rotation_interval"] // 1000}" 
+                                       value="{timing_config.get("rotation_interval", 15000) // 1000}" 
                                        min="5" max="120" step="5">
                                 <small style="color: #7f8c8d;">Time between panel rotations</small>
                             </div>
                             <div class="form-group">
                                 <label>Sub-panel Duration Offset (seconds):</label>
                                 <input type="number" name="sub_panel_duration_offset" 
-                                       value="{timing_config["sub_panel_duration_offset"] // 1000}" 
+                                       value="{timing_config.get("sub_panel_duration_offset", 5000) // 1000}" 
                                        min="1" max="30" step="1">
                                 <small style="color: #7f8c8d;">Additional time for sub-panels</small>
                             </div>
@@ -358,128 +414,122 @@ async def index(request: Request):
                     
                     <div style="text-align: center; margin-top: 30px;">
                         <button type="submit" class="btn btn-success">💾 Save Configuration</button>
-                        <a href="/config" class="btn btn-secondary">📋 View Raw Config</a>
-                        <a href="/status/panels" class="btn btn-secondary">📊 Panel Status</a>
-                        <a href="/status/system" class="btn btn-secondary">🔧 System Status</a>
+                        <a href="/config?device={device_id}" class="btn btn-secondary">📋 View Raw Config</a>
+                        <a href="/status/panels?device={device_id}" class="btn btn-secondary">📊 Panel Status</a>
+                        <a href="/status/system?device={device_id}" class="btn btn-secondary">🔧 System Status</a>
                     </div>
                 </form>
                 
                 <div class="api-links">
                     <h3>🔗 API Endpoints</h3>
-                    <a href="/config" target="_blank">GET /config</a>
-                    <a href="/status/panels" target="_blank">GET /status/panels</a>
-                    <a href="/status/system" target="_blank">GET /status/system</a>
-                    <a href="/status" target="_blank">GET /status</a>
+                    <a href="/config?device={device_id}" target="_blank">GET /config</a>
+                    <a href="/status/panels?device={device_id}" target="_blank">GET /status/panels</a>
+                    <a href="/status/system?device={device_id}" target="_blank">GET /status/system</a>
+                    <a href="/status?device={device_id}" target="_blank">GET /status</a>
                 </div>
             </div>
         </div>
         
         <script>
+            function addDevice() {{
+                const deviceId = document.getElementById('newDeviceId').value.trim();
+                if (deviceId) {{
+                    window.location.href = '/?device=' + encodeURIComponent(deviceId);
+                }}
+            }}
+            
+            function removeDevice() {{
+                const currentDevice = '{device_id}';
+                if (currentDevice !== 'baseball_1') {{
+                    if (confirm('Are you sure you want to remove device "' + currentDevice + '"?')) {{
+                        // This would need a backend endpoint to remove devices
+                        alert('Device removal not yet implemented');
+                    }}
+                }} else {{
+                    alert('Cannot remove the default device (baseball_1)');
+                }}
+            }}
+            
             // Auto-refresh status every 30 seconds
             setInterval(() => {{
-                fetch('/status/system')
-                    .then(response => response.json())
-                    .then(data => {{
-                        // Update status bar with new data
-                        console.log('Status updated:', data);
-                    }})
-                    .catch(error => console.error('Status update failed:', error));
+                // Refresh the page to get updated status
+                // window.location.reload();
             }}, 30000);
-            
-            // Form validation
-            document.querySelector('form').addEventListener('submit', function(e) {{
-                const durationInputs = document.querySelectorAll('input[name*="duration"]');
-                durationInputs.forEach(input => {{
-                    const value = parseInt(input.value);
-                    if (value < 5 || value > 300) {{
-                        e.preventDefault();
-                        alert('Panel duration must be between 5 and 300 seconds');
-                        input.focus();
-                        return;
-                    }}
-                }});
-            }});
         </script>
     </body>
     </html>
     """)
 
 
+def get_device_id(request: Request) -> str:
+    return request.headers.get("x-device-id", "baseball_1")
+
+
 @index_bp.post("/save_config")
 async def save_config(request: Request):
-    """Save configuration from form"""
+    # Get device_id from form or fallback to baseball_1
+    device_id = request.form.get("device_id", "baseball_1")
     try:
-        # Parse form data
-        form_data = request.form
-
+        form_data = request.form or {}
+        updates = {}
         # Extract mode
-        mode = form_data.get("mode", "auto")
-
-        # Extract timing configuration
-        timing_config = {
-            "live_content_timeout": int(form_data.get("live_content_timeout", 120))
-            * 1000,
-            "rotation_interval": int(form_data.get("rotation_interval", 15)) * 1000,
-            "sub_panel_duration_offset": int(
-                form_data.get("sub_panel_duration_offset", 5)
-            )
-            * 1000,
-        }
-
-        # Extract panel configurations
+        mode = form_data.get("mode")
+        if mode:
+            updates["mode"] = mode
+        # Timing config
+        for key in [
+            "live_content_timeout",
+            "rotation_interval",
+            "sub_panel_duration_offset",
+        ]:
+            val = form_data.get(key)
+            if val is not None:
+                try:
+                    updates[key] = int(val) * 1000
+                except Exception:
+                    pass
+        # Panels
         panels = {}
-        for key, value in form_data.items():
-            if key.startswith("panels."):
-                parts = key.split(".")
+        for k, v in form_data.items():
+            if k.startswith("panels."):
+                parts = k.split(".")
                 if len(parts) >= 3:
                     panel_name = parts[1]
-                    field_name = parts[2]
-
+                    field = parts[2]
                     if panel_name not in panels:
                         panels[panel_name] = {}
-
-                    if field_name == "enabled":
-                        panels[panel_name][field_name] = True
-                    elif field_name == "duration":
-                        panels[panel_name][field_name] = (
-                            int(value) * 1000
-                        )  # Convert to milliseconds
+                    if field == "enabled":
+                        panels[panel_name][field] = True
+                    elif field == "duration":
+                        try:
+                            panels[panel_name][field] = int(v) * 1000
+                        except Exception:
+                            pass
                     else:
-                        panels[panel_name][field_name] = value
-
-        # Update configuration
-        config_updates = {
-            "mode": mode,
-            "live_content_timeout": timing_config["live_content_timeout"],
-            "rotation_interval": timing_config["rotation_interval"],
-            "sub_panel_duration_offset": timing_config["sub_panel_duration_offset"],
-            "panels": panels,
-        }
-
-        success = config_manager.update_config(config_updates)
-
-        if success:
-            return response.redirect("/?success=1")
-        else:
-            return response.redirect("/?error=save_failed")
-
+                        panels[panel_name][field] = v
+        if panels:
+            updates["panels"] = panels
+        config_manager.update_device_config(device_id, updates)
+        return response.redirect(f"/?success=1&device={device_id}")
     except Exception as e:
         print(f"Error saving config: {e}")
-        return response.redirect("/?error=invalid_data")
+        return response.redirect(f"/?error=invalid_data&device={device_id}")
 
 
 @index_bp.get("/config")
 async def get_config(request: Request):
     """Get full configuration"""
-    return response.json(config_manager.get_config())
+    device_id = request.args.get("device", "baseball_1")
+    return response.json(config_manager.get_device_config(device_id))
 
 
 @index_bp.get("/status/panels")
 async def get_panel_status(request: Request):
     """Get real-time panel status"""
+    device_id = request.args.get("device", "baseball_1")
+    config = config_manager.get_device_config(device_id)
     # This would normally check actual panel states
     # For now, return mock data
-    config = config_manager.get_config()
     panels = config.get("panels", {})
 
     panel_status = {}
@@ -504,10 +554,12 @@ async def get_panel_status(request: Request):
 @index_bp.get("/status/system")
 async def get_system_status(request: Request):
     """Get system health and performance metrics"""
+    device_id = request.args.get("device", "baseball_1")
+    config = config_manager.get_device_config(device_id)
     try:
         # Get system metrics
         memory = psutil.virtual_memory()
-        config = config_manager.get_config()
+        # config = config_manager.get_config() # This line is no longer needed
 
         system_status = {
             "api_status": ApiStatus.HEALTHY.value,
@@ -532,4 +584,8 @@ async def get_system_status(request: Request):
 @index_bp.get("/status")
 async def get_status(request: Request):
     """Legacy status endpoint for backward compatibility"""
-    return response.json({"mode": config_manager.get_mode()})
+    device_id = request.args.get("device", "baseball_1")
+    config = config_manager.get_device_config(device_id)
+    return response.json(
+        {"mode": config.get("mode", "auto"), "status": config.get("mode", "auto")}
+    )

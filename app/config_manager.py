@@ -42,6 +42,26 @@ class ConfigManager:
             else:
                 merged[key] = value
 
+        # Merge devices
+        if "devices" in config:
+            for device_id, device_config in config["devices"].items():
+                if device_id not in merged["devices"]:
+                    merged["devices"][device_id] = device_config
+                else:
+                    # Merge device config fields
+                    for key, value in device_config.items():
+                        if key == "panels":
+                            for panel_name, panel_config in value.items():
+                                if panel_name in merged["devices"][device_id]["panels"]:
+                                    merged["devices"][device_id]["panels"][
+                                        panel_name
+                                    ].update(panel_config)
+                                else:
+                                    merged["devices"][device_id]["panels"][
+                                        panel_name
+                                    ] = panel_config
+                        else:
+                            merged["devices"][device_id][key] = value
         return merged
 
     def _save_config(self, config: Dict[str, Any]) -> bool:
@@ -55,27 +75,23 @@ class ConfigManager:
             print(f"Error saving config: {e}")
             return False
 
-    def get_config(self) -> Dict[str, Any]:
-        """Get current configuration"""
-        return self.config.copy()
+    def get_device_config(self, device_id: str) -> Dict[str, Any]:
+        """Get configuration for a specific device"""
+        # Fallback to 'baseball_1' if device_id not found
+        return self.config["devices"].get(device_id) or self.config["devices"].get(
+            "baseball_1"
+        )
 
-    def update_config(self, updates: Dict[str, Any]) -> bool:
-        """Update configuration with new values"""
-        # Deep merge updates
-        self._deep_merge(self.config, updates)
+    def update_device_config(self, device_id: str, updates: Dict[str, Any]) -> bool:
+        """Update configuration for a specific device"""
+        if device_id not in self.config["devices"]:
+            self.config["devices"][device_id] = {}
+        self._deep_merge(self.config["devices"][device_id], updates)
         return self._save_config(self.config)
 
-    def _deep_merge(self, target: Dict[str, Any], source: Dict[str, Any]):
-        """Recursively merge source into target"""
-        for key, value in source.items():
-            if (
-                key in target
-                and isinstance(target[key], dict)
-                and isinstance(value, dict)
-            ):
-                self._deep_merge(target[key], value)
-            else:
-                target[key] = value
+    def get_all_devices(self) -> Dict[str, Any]:
+        """Get all device configurations"""
+        return self.config["devices"]
 
     def get_mode(self) -> str:
         """Get current display mode"""
@@ -131,6 +147,18 @@ class ConfigManager:
             ]:
                 self.config[key] = value
         return self._save_config(self.config)
+
+    def _deep_merge(self, target: Dict[str, Any], source: Dict[str, Any]):
+        """Recursively merge source into target"""
+        for key, value in source.items():
+            if (
+                key in target
+                and isinstance(target[key], dict)
+                and isinstance(value, dict)
+            ):
+                self._deep_merge(target[key], value)
+            else:
+                target[key] = value
 
 
 # Global config manager instance
