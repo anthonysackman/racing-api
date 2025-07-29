@@ -708,11 +708,11 @@ async def get_status(request: Request):
 @index_bp.get("/preview")
 async def data_preview(request: Request):
     """Data preview interface for testing and viewing live data"""
-    
+
     # MLB Teams for dropdown (sorted alphabetically) - using the names that match the API
     mlb_teams = [
         {"name": "Angels"},
-        {"name": "D-backs"}, 
+        {"name": "D-backs"},
         {"name": "Orioles"},
         {"name": "Red Sox"},
         {"name": "Cubs"},
@@ -752,8 +752,7 @@ async def data_preview(request: Request):
 
     # Generate MLB team options
     mlb_team_options = "\n".join(
-        f'<option value="{team["name"]}">{team["name"]}</option>'
-        for team in mlb_teams
+        f'<option value="{team["name"]}">{team["name"]}</option>' for team in mlb_teams
     )
 
     # Generate NASCAR series options
@@ -1306,7 +1305,7 @@ async def data_preview(request: Request):
                     
                     html += `
                         <div class="race-header">
-                            <h4>${{data.race_name}} ${{{isUpcoming ? '(Upcoming)' : isPast ? '(Past)' : ''}}}</h4>
+                            <h4>${{data.race_name}} ${{isUpcoming ? '(Upcoming)' : isPast ? '(Past)' : ''}}</h4>
                             <p><strong>Track:</strong> ${{data.track_name}}</p>
                             <p><strong>Date:</strong> ${{data.race_date_formatted}}</p>
                         </div>
