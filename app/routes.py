@@ -1651,12 +1651,12 @@ async def data_preview(request: Request):
                     `;
                     
                     const details = [
-                        {{ label: '🎯 Game PK', value: data.gamePk }},
-                        {{ label: '📅 Official Date', value: data.officialDate }},
                         {{ label: '🌅 Day/Night', value: data.dayNight === 'day' ? '☀️ Day Game' : '🌙 Night Game' }},
-                        {{ label: '⚾ Innings', value: `${{data.scheduledInnings}} Innings` }},
                         {{ label: '🏆 Series', value: `Game ${{data.seriesGameNumber}} of ${{data.gamesInSeries}}` }},
-                        {{ label: '⏱️ Break Length', value: `${{data.inningBreakLength}} seconds` }}
+                        {{ label: '👥 Attendance', value: data.attendance ? data.attendance.toLocaleString() : 'TBD' }},
+                        {{ label: '🌡️ Weather', value: data.weather ? `${{data.weather.temp}}°F, ${{data.weather.condition}}` : 'N/A' }},
+                        {{ label: '💨 Wind', value: data.weather && data.weather.wind ? `${{data.weather.wind.speed}} mph ${{data.weather.wind.direction}}` : 'N/A' }},
+                        {{ label: '⏱️ First Pitch', value: data.firstPitch ? new Date(data.firstPitch).toLocaleTimeString('en-US', {{hour: 'numeric', minute: '2-digit'}}) : 'TBD' }}
                     ];
                     
                     if (data.seriesDescription) {{
@@ -1691,7 +1691,7 @@ async def data_preview(request: Request):
                             <!-- Current At-Bat -->
                             <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #007bff;">
                                 <h5 style="margin: 0 0 15px 0; color: #2c3e50;">🏏 Current At-Bat</h5>
-                                <div style="margin-bottom: 10px;"><strong>Batter:</strong> ${{data.batter}} (.${{data.batting_avg}})</div>
+                                <div style="margin-bottom: 10px;"><strong>Batter:</strong> ${{data.batter}} (${{data.batting_avg}})</div>
                                 <div style="margin-bottom: 10px;"><strong>Pitcher:</strong> ${{data.pitcher}}</div>
                                 <div style="margin-bottom: 10px;"><strong>Count:</strong> ${{data.count.balls}}-${{data.count.strikes}} (${{data.count.outs}} outs)</div>
                                 <div><strong>Today's Line:</strong> ${{data.todays_line}}</div>
