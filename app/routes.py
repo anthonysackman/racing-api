@@ -14,10 +14,10 @@ async def index(request: Request):
     """Main configuration interface"""
     # Get device ID from query param or default to baseball_1
     device_id = request.args.get("device", "baseball_1")
-    
+
     # Get all devices for the selector
     all_devices = config_manager.get_all_devices()
-    
+
     # Get config for selected device
     config = config_manager.get_device_config(device_id)
 
@@ -27,11 +27,21 @@ async def index(request: Request):
         for dev_id in all_devices.keys()
     )
 
-    # Generate mode options
-    mode_options = "\n".join(
-        f'<option value="{mode.value}"{" selected" if mode.value == config.get("mode", "auto") else ""}>{mode.name.title()}</option>'
-        for mode in DisplayMode
-    )
+    # Generate mode options based on device
+    if device_id == "baseball_1":
+        # baseball_1 only gets auto and manual modes
+        mode_options = "\n".join(
+            [
+                f'<option value="auto"{" selected" if config.get("mode", "auto") == "auto" else ""}>Auto</option>',
+                f'<option value="manual"{" selected" if config.get("mode", "auto") == "manual" else ""}>Manual</option>',
+            ]
+        )
+    else:
+        # Other devices get all modes including demo
+        mode_options = "\n".join(
+            f'<option value="{mode.value}"{" selected" if mode.value == config.get("mode", "auto") else ""}>{mode.name.title()}</option>'
+            for mode in DisplayMode
+        )
 
     # Generate panel configurations
     panel_configs = ""
@@ -402,6 +412,32 @@ async def index(request: Request):
                 background: #2980b9;
             }}
             
+            .nav-links {{
+                text-align: center;
+                margin-bottom: 20px;
+            }}
+            
+            .nav-links a {{
+                display: inline-block;
+                padding: 10px 20px;
+                margin: 0 10px;
+                background: #3498db;
+                color: white;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: 600;
+                transition: all 0.3s;
+            }}
+            
+            .nav-links a:hover {{
+                background: #2980b9;
+                transform: translateY(-2px);
+            }}
+            
+            .nav-links a.active {{
+                background: #27ae60;
+            }}
+            
             @media (max-width: 768px) {{
                 .main-grid {{
                     grid-template-columns: 1fr;
@@ -425,6 +461,11 @@ async def index(request: Request):
             </div>
             
             <div class="content">
+                <div class="nav-links">
+                    <a href="/?device={device_id}" class="active">⚙️ Configuration</a>
+                    <a href="/preview?device={device_id}">📊 Data Preview</a>
+                </div>
+                
                 <div class="device-selector">
                     <h3>📱 Select Device</h3>
                     <form method="GET" action="/">
@@ -654,3 +695,539 @@ async def get_status(request: Request):
     return response.json(
         {"mode": config.get("mode", "auto"), "status": config.get("mode", "auto")}
     )
+
+
+@index_bp.get("/preview")
+async def data_preview(request: Request):
+    """Data preview interface for testing and viewing live data"""
+    # Get device ID from query param or default to baseball_1
+    device_id = request.args.get("device", "baseball_1")
+
+    # Get all devices for the selector
+    all_devices = config_manager.get_all_devices()
+
+    # Generate device selector options
+    device_options = "\n".join(
+        f'<option value="{dev_id}"{" selected" if dev_id == device_id else ""}>{dev_id}</option>'
+        for dev_id in all_devices.keys()
+    )
+
+    # MLB Teams for dropdown
+    mlb_teams = [
+        {"id": 119, "name": "Los Angeles Dodgers"},
+        {"id": 147, "name": "New York Yankees"},
+        {"id": 111, "name": "Boston Red Sox"},
+        {"id": 110, "name": "Baltimore Orioles"},
+        {"id": 141, "name": "Toronto Blue Jays"},
+        {"id": 139, "name": "Tampa Bay Rays"},
+        {"id": 145, "name": "Chicago White Sox"},
+        {"id": 114, "name": "Cleveland Guardians"},
+        {"id": 116, "name": "Detroit Tigers"},
+        {"id": 118, "name": "Kansas City Royals"},
+        {"id": 142, "name": "Minnesota Twins"},
+        {"id": 117, "name": "Houston Astros"},
+        {"id": 108, "name": "Los Angeles Angels"},
+        {"id": 133, "name": "Oakland Athletics"},
+        {"id": 136, "name": "Seattle Mariners"},
+        {"id": 140, "name": "Texas Rangers"},
+        {"id": 121, "name": "New York Mets"},
+        {"id": 143, "name": "Philadelphia Phillies"},
+        {"id": 120, "name": "Washington Nationals"},
+        {"id": 144, "name": "Atlanta Braves"},
+        {"id": 146, "name": "Miami Marlins"},
+        {"id": 121, "name": "New York Mets"},
+        {"id": 143, "name": "Philadelphia Phillies"},
+        {"id": 120, "name": "Washington Nationals"},
+        {"id": 144, "name": "Atlanta Braves"},
+        {"id": 146, "name": "Miami Marlins"},
+        {"id": 112, "name": "Chicago Cubs"},
+        {"id": 113, "name": "Cincinnati Reds"},
+        {"id": 158, "name": "Milwaukee Brewers"},
+        {"id": 134, "name": "Pittsburgh Pirates"},
+        {"id": 138, "name": "St. Louis Cardinals"},
+        {"id": 109, "name": "Arizona Diamondbacks"},
+        {"id": 115, "name": "Colorado Rockies"},
+        {"id": 119, "name": "Los Angeles Dodgers"},
+        {"id": 135, "name": "San Diego Padres"},
+        {"id": 137, "name": "San Francisco Giants"},
+    ]
+
+    # NASCAR Series for dropdown
+    nascar_series = [
+        {"id": "cup", "name": "NASCAR Cup Series"},
+        {"id": "xfinity", "name": "NASCAR Xfinity Series"},
+        {"id": "truck", "name": "NASCAR Truck Series"},
+    ]
+
+    # Generate MLB team options
+    mlb_team_options = "\n".join(
+        f'<option value="{team["id"]}">{team["name"]}</option>' for team in mlb_teams
+    )
+
+    # Generate NASCAR series options
+    nascar_series_options = "\n".join(
+        f'<option value="{series["id"]}">{series["name"]}</option>'
+        for series in nascar_series
+    )
+
+    return response.html(f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Sports Data Preview</title>
+        <style>
+            * {{
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }}
+            
+            body {{
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                padding: 20px;
+            }}
+            
+            .container {{
+                max-width: 1400px;
+                margin: 0 auto;
+                background: white;
+                border-radius: 15px;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                overflow: hidden;
+            }}
+            
+            .header {{
+                background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+                color: white;
+                padding: 30px;
+                text-align: center;
+            }}
+            
+            .header h1 {{
+                font-size: 2.5em;
+                margin-bottom: 10px;
+            }}
+            
+            .header p {{
+                font-size: 1.1em;
+                opacity: 0.9;
+            }}
+            
+            .content {{
+                padding: 40px;
+            }}
+            
+            .device-selector {{
+                background: #ecf0f1;
+                padding: 20px;
+                border-radius: 10px;
+                margin-bottom: 30px;
+                text-align: center;
+            }}
+            
+            .device-selector h3 {{
+                color: #2c3e50;
+                margin-bottom: 15px;
+            }}
+            
+            .device-selector select {{
+                padding: 10px 15px;
+                border: 2px solid #e1e8ed;
+                border-radius: 8px;
+                font-size: 16px;
+                background: white;
+                min-width: 200px;
+            }}
+            
+            .nav-tabs {{
+                display: flex;
+                background: #f8f9fa;
+                border-radius: 10px;
+                margin-bottom: 30px;
+                overflow: hidden;
+            }}
+            
+            .nav-tab {{
+                flex: 1;
+                padding: 15px 20px;
+                background: #ecf0f1;
+                border: none;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: 600;
+                color: #7f8c8d;
+                transition: all 0.3s;
+            }}
+            
+            .nav-tab.active {{
+                background: #3498db;
+                color: white;
+            }}
+            
+            .nav-tab:hover {{
+                background: #2980b9;
+                color: white;
+            }}
+            
+            .tab-content {{
+                display: none;
+                background: #f8f9fa;
+                padding: 30px;
+                border-radius: 10px;
+                border-left: 4px solid #3498db;
+            }}
+            
+            .tab-content.active {{
+                display: block;
+            }}
+            
+            .data-controls {{
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 20px;
+                margin-bottom: 30px;
+            }}
+            
+            .control-group {{
+                display: flex;
+                flex-direction: column;
+            }}
+            
+            .control-group label {{
+                margin-bottom: 8px;
+                font-weight: 600;
+                color: #2c3e50;
+            }}
+            
+            .control-group select, .control-group button {{
+                padding: 12px;
+                border: 2px solid #e1e8ed;
+                border-radius: 8px;
+                font-size: 16px;
+                background: white;
+            }}
+            
+            .control-group select:focus {{
+                outline: none;
+                border-color: #3498db;
+            }}
+            
+            .btn {{
+                display: inline-block;
+                padding: 12px 24px;
+                border: none;
+                border-radius: 8px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s;
+                text-decoration: none;
+                margin: 5px;
+            }}
+            
+            .btn-primary {{
+                background: #3498db;
+                color: white;
+            }}
+            
+            .btn-primary:hover {{
+                background: #2980b9;
+                transform: translateY(-2px);
+            }}
+            
+            .btn-success {{
+                background: #27ae60;
+                color: white;
+            }}
+            
+            .btn-success:hover {{
+                background: #229954;
+                transform: translateY(-2px);
+            }}
+            
+            .data-display {{
+                background: white;
+                padding: 25px;
+                border-radius: 10px;
+                border: 1px solid #e1e8ed;
+                margin-top: 20px;
+            }}
+            
+            .data-display h3 {{
+                color: #2c3e50;
+                margin-bottom: 15px;
+                border-bottom: 2px solid #3498db;
+                padding-bottom: 10px;
+            }}
+            
+            .data-item {{
+                display: flex;
+                justify-content: space-between;
+                padding: 8px 0;
+                border-bottom: 1px solid #f1f2f6;
+            }}
+            
+            .data-item:last-child {{
+                border-bottom: none;
+            }}
+            
+            .data-label {{
+                font-weight: 600;
+                color: #2c3e50;
+            }}
+            
+            .data-value {{
+                color: #7f8c8d;
+                text-align: right;
+            }}
+            
+            .loading {{
+                text-align: center;
+                padding: 40px;
+                color: #7f8c8d;
+            }}
+            
+            .error {{
+                background: #e74c3c;
+                color: white;
+                padding: 15px;
+                border-radius: 8px;
+                margin: 10px 0;
+            }}
+            
+            .nav-links {{
+                text-align: center;
+                margin-bottom: 20px;
+            }}
+            
+            .nav-links a {{
+                display: inline-block;
+                padding: 10px 20px;
+                margin: 0 10px;
+                background: #3498db;
+                color: white;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: 600;
+                transition: all 0.3s;
+            }}
+            
+            .nav-links a:hover {{
+                background: #2980b9;
+                transform: translateY(-2px);
+            }}
+            
+            .nav-links a.active {{
+                background: #27ae60;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>📊 Sports Data Preview</h1>
+                <p>Test and view live sports data</p>
+            </div>
+            
+            <div class="content">
+                <div class="nav-links">
+                    <a href="/?device={device_id}" class="active">⚙️ Configuration</a>
+                    <a href="/preview?device={device_id}">📊 Data Preview</a>
+                </div>
+                
+                <div class="device-selector">
+                    <h3>📱 Select Device</h3>
+                    <form method="GET" action="/preview">
+                        <select name="device" id="device" onchange="this.form.submit()">
+                            {device_options}
+                        </select>
+                    </form>
+                </div>
+                
+                <div class="nav-tabs">
+                    <button class="nav-tab active" onclick="showTab('baseball')">⚾ Baseball Data</button>
+                    <button class="nav-tab" onclick="showTab('nascar')">🏁 NASCAR Data</button>
+                </div>
+                
+                <div id="baseball-tab" class="tab-content active">
+                    <div class="data-controls">
+                        <div class="control-group">
+                            <label>Select Team:</label>
+                            <select id="mlb-team">
+                                {mlb_team_options}
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>Data Type:</label>
+                            <select id="mlb-data-type">
+                                <option value="last">Last Game</option>
+                                <option value="next">Next Game</option>
+                                <option value="live">Live Game</option>
+                                <option value="live-details">Live Game Details</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-primary" onclick="fetchMLBData()">🔍 Fetch Data</button>
+                        </div>
+                    </div>
+                    
+                    <div id="mlb-data" class="data-display">
+                        <h3>⚾ Baseball Data</h3>
+                        <div class="loading">Select a team and data type, then click "Fetch Data"</div>
+                    </div>
+                </div>
+                
+                <div id="nascar-tab" class="tab-content">
+                    <div class="data-controls">
+                        <div class="control-group">
+                            <label>Select Series:</label>
+                            <select id="nascar-series">
+                                {nascar_series_options}
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>Data Type:</label>
+                            <select id="nascar-data-type">
+                                <option value="schedule">Schedule</option>
+                                <option value="standings">Standings</option>
+                                <option value="live">Live Data</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-primary" onclick="fetchNASCARData()">🔍 Fetch Data</button>
+                        </div>
+                    </div>
+                    
+                    <div id="nascar-data" class="data-display">
+                        <h3>🏁 NASCAR Data</h3>
+                        <div class="loading">Select a series and data type, then click "Fetch Data"</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <script>
+            function showTab(tabName) {{
+                // Hide all tab contents
+                document.querySelectorAll('.tab-content').forEach(tab => {{
+                    tab.classList.remove('active');
+                }});
+                
+                // Remove active class from all tabs
+                document.querySelectorAll('.nav-tab').forEach(tab => {{
+                    tab.classList.remove('active');
+                }});
+                
+                // Show selected tab content
+                document.getElementById(tabName + '-tab').classList.add('active');
+                
+                // Add active class to clicked tab
+                event.target.classList.add('active');
+            }}
+            
+            function fetchMLBData() {{
+                const teamId = document.getElementById('mlb-team').value;
+                const dataType = document.getElementById('mlb-data-type').value;
+                const deviceId = '{device_id}';
+                
+                const dataDiv = document.getElementById('mlb-data');
+                dataDiv.innerHTML = '<h3>⚾ Baseball Data</h3><div class="loading">Loading...</div>';
+                
+                let endpoint = '';
+                switch(dataType) {{
+                    case 'last':
+                        endpoint = `/baseball/last/${{teamId}}`;
+                        break;
+                    case 'next':
+                        endpoint = `/baseball/next/${{teamId}}`;
+                        break;
+                    case 'live':
+                        endpoint = `/baseball/live/${{teamId}}`;
+                        break;
+                    case 'live-details':
+                        endpoint = `/baseball/live/${{teamId}}/details`;
+                        break;
+                }}
+                
+                fetch(endpoint, {{
+                    headers: {{
+                        'X-Device-ID': deviceId
+                    }}
+                }})
+                .then(response => response.json())
+                .then(data => {{
+                    displayData(dataDiv, data, 'Baseball');
+                }})
+                .catch(error => {{
+                    dataDiv.innerHTML = `<h3>⚾ Baseball Data</h3><div class="error">Error: ${{error.message}}</div>`;
+                }});
+            }}
+            
+            function fetchNASCARData() {{
+                const series = document.getElementById('nascar-series').value;
+                const dataType = document.getElementById('nascar-data-type').value;
+                const deviceId = '{device_id}';
+                
+                const dataDiv = document.getElementById('nascar-data');
+                dataDiv.innerHTML = '<h3>🏁 NASCAR Data</h3><div class="loading">Loading...</div>';
+                
+                let endpoint = '';
+                switch(dataType) {{
+                    case 'schedule':
+                        endpoint = `/nascar/schedule/${{series}}`;
+                        break;
+                    case 'standings':
+                        endpoint = `/nascar/standings/${{series}}`;
+                        break;
+                    case 'live':
+                        endpoint = `/nascar/live/${{series}}`;
+                        break;
+                }}
+                
+                fetch(endpoint, {{
+                    headers: {{
+                        'X-Device-ID': deviceId
+                    }}
+                }})
+                .then(response => response.json())
+                .then(data => {{
+                    displayData(dataDiv, data, 'NASCAR');
+                }})
+                .catch(error => {{
+                    dataDiv.innerHTML = `<h3>🏁 NASCAR Data</h3><div class="error">Error: ${{error.message}}</div>`;
+                }});
+            }}
+            
+            function displayData(container, data, sport) {{
+                let html = `<h3>${{sport === 'Baseball' ? '⚾' : '🏁'}} ${{sport}} Data</h3>`;
+                
+                if (data.error) {{
+                    html += `<div class="error">${{data.error}}</div>`;
+                }} else {{
+                    html += '<div class="data-items">';
+                    for (const [key, value] of Object.entries(data)) {{
+                        if (key !== 'status') {{
+                            const displayValue = typeof value === 'object' ? JSON.stringify(value, null, 2) : value;
+                            html += `
+                                <div class="data-item">
+                                    <span class="data-label">${{key}}:</span>
+                                    <span class="data-value">${{displayValue}}</span>
+                                </div>
+                            `;
+                        }}
+                    }}
+                    html += '</div>';
+                }}
+                
+                container.innerHTML = html;
+            }}
+        </script>
+    </body>
+    </html>
+    """)
