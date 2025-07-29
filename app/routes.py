@@ -1169,7 +1169,7 @@ async def data_preview(request: Request):
                         endpoint = `/baseball/live/${{encodeURIComponent(teamName)}}`;
                         break;
                     case 'live-details':
-                        endpoint = `/baseball/live/${{encodeURIComponent(teamName)}}/details`;
+                        endpoint = `/baseball/live/details/${{encodeURIComponent(teamName)}}`;
                         break;
                 }}
                 
@@ -1302,10 +1302,11 @@ async def data_preview(request: Request):
                     // Format race data (upcoming or past)
                     const isUpcoming = data.is_next_race;
                     const isPast = data.is_last_race;
+                    const statusText = isUpcoming ? '(Upcoming)' : isPast ? '(Past)' : '';
                     
                     html += `
                         <div class="race-header">
-                            <h4>${{data.race_name}} ${{isUpcoming ? '(Upcoming)' : isPast ? '(Past)' : ''}}</h4>
+                            <h4>${{data.race_name}} ${{statusText}}</h4>
                             <p><strong>Track:</strong> ${{data.track_name}}</p>
                             <p><strong>Date:</strong> ${{data.race_date_formatted}}</p>
                         </div>
@@ -1409,8 +1410,164 @@ async def data_preview(request: Request):
                     
                     html += '</tbody></table>';
                     
+                }} else if (data.gamePk && sport === 'Baseball') {{
+                    // Format baseball game data
+                    const gameDate = new Date(data.gameDate).toLocaleDateString('en-US', {{
+                        weekday: 'long',
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit'
+                    }});
+                    
+                    const awayTeam = data.teams?.away;
+                    const homeTeam = data.teams?.home;
+                    const venue = data.venue;
+                    
+                    // Game header
+                    html += `
+                        <div class="game-header" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #007bff;">
+                            <h4 style="margin: 0 0 10px 0; color: #2c3e50; font-size: 1.4em;">${{data.gameType === 'R' ? 'Regular Season' : data.gameType === 'P' ? 'Playoffs' : 'Game'}} - ${{data.season}}</h4>
+                            <p style="margin: 5px 0; color: #666;"><strong>📅 Date:</strong> ${{gameDate}}</p>
+                            ${{venue ? `<p style="margin: 5px 0; color: #666;"><strong>🏟️ Venue:</strong> ${{venue.name}}</strong></p>` : ''}}
+                            <p style="margin: 5px 0; color: #666;"><strong>🎯 Game #:</strong> ${{data.gameNumber}} ${{data.doubleHeader !== 'N' ? '(Double Header)' : ''}}</p>
+                        </div>
+                    `;
+                    
+                    if (awayTeam && homeTeam) {{
+                        // Teams and Score
+                        const awayScore = awayTeam.score !== undefined ? awayTeam.score : '-';
+                        const homeScore = homeTeam.score !== undefined ? homeTeam.score : '-';
+                        const gameFinished = data.isTie !== undefined || awayTeam.isWinner !== undefined || homeTeam.isWinner !== undefined;
+                        
+                        html += `
+                            <div class="teams-section" style="margin-bottom: 20px;">
+                                <h4 style="margin-bottom: 15px; color: #2c3e50;">⚾ Matchup</h4>
+                                <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: center; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                    
+                                    <!-- Away Team -->
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 1.2em; font-weight: bold; color: #2c3e50; margin-bottom: 8px;">
+                                            ${{awayTeam.team.name}} ${{awayTeam.isWinner ? '🏆' : ''}}
+                                        </div>
+                                        <div style="font-size: 2em; font-weight: bold; color: #007bff; margin-bottom: 8px;">
+                                            ${{awayScore}}
+                                        </div>
+                                        <div style="font-size: 0.9em; color: #6c757d;">
+                                            Record: ${{awayTeam.leagueRecord ? `${{awayTeam.leagueRecord.wins}}-${{awayTeam.leagueRecord.losses}} (${{awayTeam.leagueRecord.pct}})` : 'N/A'}}
+                                        </div>
+                                        <div style="font-size: 0.8em; color: #6c757d; margin-top: 4px;">
+                                            (Away)
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- VS -->
+                                    <div style="text-align: center; font-size: 1.5em; color: #6c757d; font-weight: bold;">
+                                        ${{gameFinished ? 'FINAL' : 'VS'}}
+                                    </div>
+                                    
+                                    <!-- Home Team -->
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 1.2em; font-weight: bold; color: #2c3e50; margin-bottom: 8px;">
+                                            ${{homeTeam.team.name}} ${{homeTeam.isWinner ? '🏆' : ''}}
+                                        </div>
+                                        <div style="font-size: 2em; font-weight: bold; color: #28a745; margin-bottom: 8px;">
+                                            ${{homeScore}}
+                                        </div>
+                                        <div style="font-size: 0.9em; color: #6c757d;">
+                                            Record: ${{homeTeam.leagueRecord ? `${{homeTeam.leagueRecord.wins}}-${{homeTeam.leagueRecord.losses}} (${{homeTeam.leagueRecord.pct}})` : 'N/A'}}
+                                        </div>
+                                        <div style="font-size: 0.8em; color: #6c757d; margin-top: 4px;">
+                                            (Home)
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }}
+                    
+                    // Game Details
+                    html += `
+                        <div class="game-details">
+                            <h4 style="margin-bottom: 15px; color: #2c3e50;">📋 Game Details</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    `;
+                    
+                    const details = [
+                        {{ label: '🎯 Game PK', value: data.gamePk }},
+                        {{ label: '📅 Official Date', value: data.officialDate }},
+                        {{ label: '🌅 Day/Night', value: data.dayNight === 'day' ? '☀️ Day Game' : '🌙 Night Game' }},
+                        {{ label: '⚾ Innings', value: `${{data.scheduledInnings}} Innings` }},
+                        {{ label: '🏆 Series', value: `Game ${{data.seriesGameNumber}} of ${{data.gamesInSeries}}` }},
+                        {{ label: '⏱️ Break Length', value: `${{data.inningBreakLength}} seconds` }}
+                    ];
+                    
+                    if (data.seriesDescription) {{
+                        details.push({{ label: '📄 Series Type', value: data.seriesDescription }});
+                    }}
+                    
+                    details.forEach(detail => {{
+                        if (detail.value !== undefined && detail.value !== null) {{
+                            html += `
+                                <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 3px solid #007bff;">
+                                    <div style="font-size: 0.85em; color: #6c757d; margin-bottom: 5px;">${{detail.label}}</div>
+                                    <div style="font-weight: 600; color: #2c3e50;">${{detail.value}}</div>
+                                </div>
+                            `;
+                        }}
+                    }});
+                    
+                    html += '</div></div>';
+                    
+                }} else if (data.batter && sport === 'Baseball') {{
+                    // Format live baseball game details
+                    html += `
+                        <div class="live-game-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                            <h4 style="margin: 0 0 10px 0; font-size: 1.4em;">🔴 LIVE GAME</h4>
+                            <p style="margin: 5px 0; opacity: 0.9;"><strong>${{data.teams.away}} vs ${{data.teams.home}}</strong></p>
+                            <div style="font-size: 1.2em; margin-top: 10px;">
+                                ${{data.inning.half}} ${{data.inning.number}} | ${{Object.keys(data.score)[0]}}: ${{Object.values(data.score)[0]}} - ${{Object.keys(data.score)[1]}}: ${{Object.values(data.score)[1]}}
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                            <!-- Current At-Bat -->
+                            <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #007bff;">
+                                <h5 style="margin: 0 0 15px 0; color: #2c3e50;">🏏 Current At-Bat</h5>
+                                <div style="margin-bottom: 10px;"><strong>Batter:</strong> ${{data.batter}} (.{{data.batting_avg}})</div>
+                                <div style="margin-bottom: 10px;"><strong>Pitcher:</strong> ${{data.pitcher}}</div>
+                                <div style="margin-bottom: 10px;"><strong>Count:</strong> ${{data.count.balls}}-${{data.count.strikes}} (${{data.count.outs}} outs)</div>
+                                <div><strong>Today's Line:</strong> ${{data.todays_line}}</div>
+                            </div>
+                            
+                            <!-- Last Pitch -->
+                            <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #28a745;">
+                                <h5 style="margin: 0 0 15px 0; color: #2c3e50;">⚾ Last Pitch</h5>
+                                <div style="margin-bottom: 10px;"><strong>Type:</strong> ${{data.pitch_type}} (${{data.raw_pitch_type}})</div>
+                                <div style="margin-bottom: 10px;"><strong>Speed:</strong> ${{data.pitch_speed}} mph</div>
+                                <div style="margin-bottom: 10px;"><strong>Outcome:</strong> ${{data.outcome}} (${{data.raw_outcome}})</div>
+                                <div><strong>Location:</strong> (${{data.px?.toFixed(2) || 'N/A'}}, ${{data.pz?.toFixed(2) || 'N/A'}})</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Strike Zone Visualization -->
+                        <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
+                            <h5 style="margin: 0 0 15px 0; color: #2c3e50;">🎯 Strike Zone</h5>
+                            <div style="text-align: center;">
+                                <div style="display: inline-block; position: relative; width: 200px; height: 200px; border: 2px solid #333; background: linear-gradient(to bottom, #e3f2fd 0%, #bbdefb 100%);">
+                                    <div style="position: absolute; left: ${{(data.matrix_location.x - 1) * 60 + 20}}px; top: ${{(data.matrix_location.y - 1) * 60 + 20}}px; width: 20px; height: 20px; background: #ff4444; border-radius: 50%; transform: translate(-50%, -50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>
+                                    <div style="position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%); font-size: 0.8em; color: #666;">Home Plate</div>
+                                </div>
+                                <div style="margin-top: 15px; font-size: 0.9em; color: #666;">
+                                    Zone: ${{data.zone_bottom?.toFixed(2) || 'N/A'}} - ${{data.zone_top?.toFixed(2) || 'N/A'}} ft
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
                 }} else {{
-                    // Format single object data
+                    // Format single object data (fallback)
                     html += '<div class="data-items">';
                     for (const [key, value] of Object.entries(data)) {{
                         if (key !== 'status') {{

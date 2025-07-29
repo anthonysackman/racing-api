@@ -84,7 +84,17 @@ def get_team_id_by_name(name):
     res = requests.get(f"{BASE_URL}/teams?sportId=1")
     teams = res.json().get("teams", [])
     for team in teams:
-        if name.lower() in (team["name"].lower(), team["teamName"].lower()):
+        team_name = team["name"].lower()
+        team_team_name = team["teamName"].lower()
+        search_name = name.lower()
+        
+        # Exact match first
+        if search_name == team_name or search_name == team_team_name:
+            return team["id"]
+        
+        # Check if search name is contained in team name or vice versa
+        if (search_name in team_name or team_name in search_name or 
+            search_name in team_team_name or team_team_name in search_name):
             return team["id"]
     return None
 
@@ -147,7 +157,17 @@ def get_live_game_details(team_id):
     logger.warning(f"Fetching live data for gamePk: {gamePk}")
     res = requests.get(f"https://statsapi.mlb.com/api/v1.1/game/{gamePk}/feed/live")
     logger.warning(f"Feed response status: {res.status_code}")
-    data = res.json()
+    
+    if res.status_code != 200:
+        logger.warning(f"API returned status {res.status_code}")
+        return None
+    
+    try:
+        data = res.json()
+    except Exception as e:
+        logger.warning(f"Failed to parse JSON response: {e}")
+        logger.warning(f"Response content: {res.text[:200]}...")
+        return None
 
     latest_play = data["liveData"]["plays"]["allPlays"][-1]
     batter_info = latest_play["matchup"]["batter"]
