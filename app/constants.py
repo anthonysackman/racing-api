@@ -48,6 +48,24 @@ DEFAULT_CONFIG = {
                     "duration": 30000,  # 30 seconds
                     "priority": PanelPriority.LIVE.value,
                 },
+                "dashboard": {
+                    "enabled": True,
+                    "duration": 15000,  # 15 seconds
+                    "priority": PanelPriority.STATIC.value,
+                },
+            },
+        },
+        "office_display": {
+            "mode": DEFAULT_MODE.value,
+            "live_content_timeout": 120000,
+            "rotation_interval": 15000,
+            "sub_panel_duration_offset": 5000,
+            "panels": {
+                "baseball": {
+                    "enabled": True,
+                    "duration": 30000,
+                    "priority": PanelPriority.LIVE.value,
+                },
                 "nascar": {
                     "enabled": True,
                     "duration": 45000,  # 45 seconds
@@ -55,10 +73,33 @@ DEFAULT_CONFIG = {
                 },
                 "dashboard": {
                     "enabled": True,
-                    "duration": 15000,  # 15 seconds
+                    "duration": 15000,
                     "priority": PanelPriority.STATIC.value,
                 },
             },
-        }
+        },
+        "living_room": {
+            "mode": DEFAULT_MODE.value,
+            "live_content_timeout": 120000,
+            "rotation_interval": 15000,
+            "sub_panel_duration_offset": 5000,
+            "panels": {
+                "baseball": {
+                    "enabled": True,
+                    "duration": 30000,
+                    "priority": PanelPriority.LIVE.value,
+                },
+                "nascar": {
+                    "enabled": True,
+                    "duration": 45000,
+                    "priority": PanelPriority.LIVE.value,
+                },
+                "dashboard": {
+                    "enabled": True,
+                    "duration": 15000,
+                    "priority": PanelPriority.STATIC.value,
+                },
+            },
+        },
     }
 }

@@ -14,10 +14,10 @@ async def index(request: Request):
     """Main configuration interface"""
     # Get device ID from query param or default to baseball_1
     device_id = request.args.get("device", "baseball_1")
-
+    
     # Get all devices for the selector
     all_devices = config_manager.get_all_devices()
-
+    
     # Get config for selected device
     config = config_manager.get_device_config(device_id)
 
@@ -47,22 +47,31 @@ async def index(request: Request):
 
         panel_configs += f"""
         <div class="panel-config">
-            <h3>{panel_name.title()} Panel</h3>
-            <div class="form-group">
-                <label>
-                    <input type="checkbox" name="panels.{panel_name}.enabled" {enabled_checked}>
-                    Enabled
-                </label>
+            <div class="panel-header">
+                <h3>{panel_name.title()} Panel</h3>
+                <div class="panel-status">
+                    <span class="status-dot active"></span>
+                    <span class="status-text">Active</span>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Duration (seconds):</label>
-                <input type="number" name="panels.{panel_name}.duration" value="{duration_value}" min="5" max="300">
-            </div>
-            <div class="form-group">
-                <label>Priority:</label>
-                <select name="panels.{panel_name}.priority">
-                    {priority_options}
-                </select>
+            <div class="panel-controls">
+                <div class="control-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="panels.{panel_name}.enabled" {enabled_checked}>
+                        <span class="checkmark"></span>
+                        Enabled
+                    </label>
+                </div>
+                <div class="control-group">
+                    <label>Duration (seconds):</label>
+                    <input type="number" name="panels.{panel_name}.duration" value="{duration_value}" min="5" max="300">
+                </div>
+                <div class="control-group">
+                    <label>Priority:</label>
+                    <select name="panels.{panel_name}.priority">
+                        {priority_options}
+                    </select>
+                </div>
             </div>
         </div>
         """
@@ -125,18 +134,82 @@ async def index(request: Request):
                 padding: 40px;
             }}
             
-            .section {{
-                margin-bottom: 40px;
-                padding: 25px;
+            .device-selector {{
+                background: #ecf0f1;
+                padding: 20px;
+                border-radius: 10px;
+                margin-bottom: 30px;
+                text-align: center;
+            }}
+            
+            .device-selector h3 {{
+                color: #2c3e50;
+                margin-bottom: 15px;
+            }}
+            
+            .device-selector select {{
+                padding: 10px 15px;
+                border: 2px solid #e1e8ed;
+                border-radius: 8px;
+                font-size: 16px;
+                background: white;
+                min-width: 200px;
+            }}
+            
+            .main-grid {{
+                display: grid;
+                grid-template-columns: 1fr 2fr;
+                gap: 30px;
+                margin-bottom: 30px;
+            }}
+            
+            .status-panel {{
                 background: #f8f9fa;
+                padding: 25px;
                 border-radius: 10px;
                 border-left: 4px solid #3498db;
             }}
             
-            .section h2 {{
+            .status-panel h2 {{
                 color: #2c3e50;
                 margin-bottom: 20px;
-                font-size: 1.5em;
+                font-size: 1.3em;
+            }}
+            
+            .status-item {{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 0;
+                border-bottom: 1px solid #e1e8ed;
+            }}
+            
+            .status-item:last-child {{
+                border-bottom: none;
+            }}
+            
+            .status-label {{
+                font-size: 0.9em;
+                color: #7f8c8d;
+            }}
+            
+            .status-value {{
+                font-size: 1em;
+                font-weight: 600;
+                color: #2c3e50;
+            }}
+            
+            .config-panel {{
+                background: #f8f9fa;
+                padding: 25px;
+                border-radius: 10px;
+                border-left: 4px solid #27ae60;
+            }}
+            
+            .config-panel h2 {{
+                color: #2c3e50;
+                margin-bottom: 20px;
+                font-size: 1.3em;
             }}
             
             .form-group {{
@@ -168,8 +241,8 @@ async def index(request: Request):
             
             .timing-grid {{
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                gap: 20px;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
             }}
             
             .panel-config {{
@@ -180,11 +253,92 @@ async def index(request: Request):
                 border: 1px solid #e1e8ed;
             }}
             
-            .panel-config h3 {{
-                color: #2c3e50;
+            .panel-header {{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
                 margin-bottom: 15px;
+                padding-bottom: 10px;
                 border-bottom: 2px solid #3498db;
-                padding-bottom: 8px;
+            }}
+            
+            .panel-header h3 {{
+                color: #2c3e50;
+                font-size: 1.2em;
+            }}
+            
+            .panel-status {{
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }}
+            
+            .status-dot {{
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: #27ae60;
+            }}
+            
+            .status-text {{
+                font-size: 0.9em;
+                color: #27ae60;
+                font-weight: 600;
+            }}
+            
+            .panel-controls {{
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 15px;
+            }}
+            
+            .control-group {{
+                display: flex;
+                flex-direction: column;
+            }}
+            
+            .control-group label {{
+                margin-bottom: 5px;
+                font-size: 0.9em;
+                color: #2c3e50;
+            }}
+            
+            .checkbox-label {{
+                display: flex;
+                align-items: center;
+                cursor: pointer;
+                font-size: 0.9em;
+                color: #2c3e50;
+            }}
+            
+            .checkbox-label input[type="checkbox"] {{
+                display: none;
+            }}
+            
+            .checkmark {{
+                width: 18px;
+                height: 18px;
+                border: 2px solid #e1e8ed;
+                border-radius: 3px;
+                margin-right: 8px;
+                position: relative;
+                transition: all 0.3s;
+            }}
+            
+            .checkbox-label input[type="checkbox"]:checked + .checkmark {{
+                background: #3498db;
+                border-color: #3498db;
+            }}
+            
+            .checkbox-label input[type="checkbox"]:checked + .checkmark::after {{
+                content: '✓';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: white;
+                font-size: 12px;
+                font-weight: bold;
             }}
             
             .btn {{
@@ -220,37 +374,12 @@ async def index(request: Request):
                 transform: translateY(-2px);
             }}
             
-            .status-grid {{
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 15px;
-                margin-bottom: 30px;
-            }}
-            
-            .status-item {{
-                background: white;
-                padding: 15px;
-                border-radius: 8px;
-                border-left: 4px solid #3498db;
-            }}
-            
-            .status-label {{
-                font-size: 0.9em;
-                color: #7f8c8d;
-                margin-bottom: 5px;
-            }}
-            
-            .status-value {{
-                font-size: 1.2em;
-                font-weight: 600;
-                color: #2c3e50;
-            }}
-            
             .api-links {{
-                margin-top: 40px;
+                margin-top: 30px;
                 padding: 20px;
                 background: #ecf0f1;
                 border-radius: 10px;
+                text-align: center;
             }}
             
             .api-links h3 {{
@@ -273,43 +402,18 @@ async def index(request: Request):
                 background: #2980b9;
             }}
             
-            .device-selector {{
-                background: #ecf0f1;
-                padding: 20px;
-                border-radius: 10px;
-                margin-bottom: 30px;
-            }}
-            
-            .device-selector h3 {{
-                color: #2c3e50;
-                margin-bottom: 15px;
-            }}
-            
-            .device-controls {{
-                display: flex;
-                gap: 10px;
-                align-items: center;
-                margin-top: 15px;
-            }}
-            
-            .device-controls input {{
-                flex: 1;
-                padding: 8px 12px;
-                border: 2px solid #e1e8ed;
-                border-radius: 5px;
-            }}
-            
-            .device-controls button {{
-                padding: 8px 16px;
-                background: #3498db;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-            }}
-            
-            .device-controls button:hover {{
-                background: #2980b9;
+            @media (max-width: 768px) {{
+                .main-grid {{
+                    grid-template-columns: 1fr;
+                }}
+                
+                .timing-grid {{
+                    grid-template-columns: 1fr;
+                }}
+                
+                .panel-controls {{
+                    grid-template-columns: 1fr;
+                }}
             }}
         </style>
     </head>
@@ -322,103 +426,91 @@ async def index(request: Request):
             
             <div class="content">
                 <div class="device-selector">
-                    <h3>📱 Device Selection</h3>
+                    <h3>📱 Select Device</h3>
                     <form method="GET" action="/">
-                        <div class="form-group">
-                            <label for="device">Select Device:</label>
-                            <select name="device" id="device" onchange="this.form.submit()">
-                                {device_options}
-                            </select>
-                        </div>
+                        <select name="device" id="device" onchange="this.form.submit()">
+                            {device_options}
+                        </select>
                     </form>
-                    
-                    <div class="device-controls">
-                        <input type="text" id="newDeviceId" placeholder="New device ID (e.g., office_display)">
-                        <button onclick="addDevice()">➕ Add Device</button>
-                        <button onclick="removeDevice()" style="background: #e74c3c;">🗑️ Remove Device</button>
-                    </div>
                 </div>
                 
-                <div class="status-grid">
-                    <div class="status-item">
-                        <div class="status-label">Current Device</div>
-                        <div class="status-value">{device_id}</div>
-                    </div>
-                    <div class="status-item">
-                        <div class="status-label">Display Mode</div>
-                        <div class="status-value">{config.get("mode", "auto").title()}</div>
-                    </div>
-                    <div class="status-item">
-                        <div class="status-label">Rotation Interval</div>
-                        <div class="status-value">{int(timing_config.get("rotation_interval", 15000)) // 1000}s</div>
-                    </div>
-                    <div class="status-item">
-                        <div class="status-label">Live Timeout</div>
-                        <div class="status-value">{int(timing_config.get("live_content_timeout", 120000)) // 1000}s</div>
-                    </div>
-                    <div class="status-item">
-                        <div class="status-label">Sub-panel Offset</div>
-                        <div class="status-value">{int(timing_config.get("sub_panel_duration_offset", 5000)) // 1000}s</div>
-                    </div>
-                </div>
-                
-                <form action="/save_config" method="POST">
-                    <input type="hidden" name="device_id" value="{device_id}">
-                    
-                    <div class="section">
-                        <h2>🎛️ Display Mode</h2>
-                        <div class="form-group">
-                            <label for="mode">Display Mode:</label>
-                            <select name="mode" id="mode">
-                                {mode_options}
-                            </select>
-                            <small style="color: #7f8c8d; margin-top: 5px; display: block;">
-                                <strong>Auto:</strong> Automatically rotate between panels based on live content<br>
-                                <strong>Manual:</strong> Manual control of panel selection<br>
-                                <strong>Demo:</strong> Demo mode for testing
-                            </small>
+                <div class="main-grid">
+                    <div class="status-panel">
+                        <h2>📊 Device Status</h2>
+                        <div class="status-item">
+                            <span class="status-label">Device ID</span>
+                            <span class="status-value">{device_id}</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Display Mode</span>
+                            <span class="status-value">{config.get("mode", "auto").title()}</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Rotation Interval</span>
+                            <span class="status-value">{int(timing_config.get("rotation_interval", 15000)) // 1000}s</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Live Timeout</span>
+                            <span class="status-value">{int(timing_config.get("live_content_timeout", 120000)) // 1000}s</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Sub-panel Offset</span>
+                            <span class="status-value">{int(timing_config.get("sub_panel_duration_offset", 5000)) // 1000}s</span>
                         </div>
                     </div>
                     
-                    <div class="section">
-                        <h2>⏱️ Timing Configuration</h2>
-                        <div class="timing-grid">
+                    <div class="config-panel">
+                        <h2>🎛️ Configuration</h2>
+                        <form action="/save_config" method="POST">
+                            <input type="hidden" name="device_id" value="{device_id}">
+                            
                             <div class="form-group">
-                                <label>Live Content Timeout (seconds):</label>
-                                <input type="number" name="live_content_timeout" 
-                                       value="{timing_config.get("live_content_timeout", 120000) // 1000}" 
-                                       min="30" max="600" step="30">
-                                <small style="color: #7f8c8d;">How long to show live content before rotating</small>
+                                <label for="mode">Display Mode:</label>
+                                <select name="mode" id="mode">
+                                    {mode_options}
+                                </select>
+                                <small style="color: #7f8c8d; margin-top: 5px; display: block;">
+                                    <strong>Auto:</strong> Automatically rotate between panels based on live content<br>
+                                    <strong>Manual:</strong> Manual control of panel selection<br>
+                                    <strong>Demo:</strong> Demo mode for testing
+                                </small>
                             </div>
+                            
                             <div class="form-group">
-                                <label>Rotation Interval (seconds):</label>
-                                <input type="number" name="rotation_interval" 
-                                       value="{timing_config.get("rotation_interval", 15000) // 1000}" 
-                                       min="5" max="120" step="5">
-                                <small style="color: #7f8c8d;">Time between panel rotations</small>
+                                <label>Timing Configuration:</label>
+                                <div class="timing-grid">
+                                    <div>
+                                        <label>Live Content Timeout (seconds):</label>
+                                        <input type="number" name="live_content_timeout" 
+                                               value="{timing_config.get("live_content_timeout", 120000) // 1000}" 
+                                               min="30" max="600" step="30">
+                                    </div>
+                                    <div>
+                                        <label>Rotation Interval (seconds):</label>
+                                        <input type="number" name="rotation_interval" 
+                                               value="{timing_config.get("rotation_interval", 15000) // 1000}" 
+                                               min="5" max="120" step="5">
+                                    </div>
+                                    <div>
+                                        <label>Sub-panel Duration Offset (seconds):</label>
+                                        <input type="number" name="sub_panel_duration_offset" 
+                                               value="{timing_config.get("sub_panel_duration_offset", 5000) // 1000}" 
+                                               min="1" max="30" step="1">
+                                    </div>
+                                </div>
                             </div>
+                            
                             <div class="form-group">
-                                <label>Sub-panel Duration Offset (seconds):</label>
-                                <input type="number" name="sub_panel_duration_offset" 
-                                       value="{timing_config.get("sub_panel_duration_offset", 5000) // 1000}" 
-                                       min="1" max="30" step="1">
-                                <small style="color: #7f8c8d;">Additional time for sub-panels</small>
+                                <label>Panel Configuration:</label>
+                                {panel_configs}
                             </div>
-                        </div>
+                            
+                            <div style="text-align: center; margin-top: 20px;">
+                                <button type="submit" class="btn btn-success">💾 Save Configuration</button>
+                            </div>
+                        </form>
                     </div>
-                    
-                    <div class="section">
-                        <h2>📺 Panel Configuration</h2>
-                        {panel_configs}
-                    </div>
-                    
-                    <div style="text-align: center; margin-top: 30px;">
-                        <button type="submit" class="btn btn-success">💾 Save Configuration</button>
-                        <a href="/config?device={device_id}" class="btn btn-secondary">📋 View Raw Config</a>
-                        <a href="/status/panels?device={device_id}" class="btn btn-secondary">📊 Panel Status</a>
-                        <a href="/status/system?device={device_id}" class="btn btn-secondary">🔧 System Status</a>
-                    </div>
-                </form>
+                </div>
                 
                 <div class="api-links">
                     <h3>🔗 API Endpoints</h3>
@@ -429,33 +521,6 @@ async def index(request: Request):
                 </div>
             </div>
         </div>
-        
-        <script>
-            function addDevice() {{
-                const deviceId = document.getElementById('newDeviceId').value.trim();
-                if (deviceId) {{
-                    window.location.href = '/?device=' + encodeURIComponent(deviceId);
-                }}
-            }}
-            
-            function removeDevice() {{
-                const currentDevice = '{device_id}';
-                if (currentDevice !== 'baseball_1') {{
-                    if (confirm('Are you sure you want to remove device "' + currentDevice + '"?')) {{
-                        // This would need a backend endpoint to remove devices
-                        alert('Device removal not yet implemented');
-                    }}
-                }} else {{
-                    alert('Cannot remove the default device (baseball_1)');
-                }}
-            }}
-            
-            // Auto-refresh status every 30 seconds
-            setInterval(() => {{
-                // Refresh the page to get updated status
-                // window.location.reload();
-            }}, 30000);
-        </script>
     </body>
     </html>
     """)
