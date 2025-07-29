@@ -1051,6 +1051,162 @@ async def data_preview(request: Request):
                 border-left: 4px solid #3498db;
                 font-style: italic;
             }}
+            
+            /* Mobile Responsive Styles */
+            @media (max-width: 768px) {{
+                .container {{
+                    padding: 10px;
+                }}
+                
+                .content {{
+                    padding: 15px;
+                }}
+                
+                .data-controls {{
+                    grid-template-columns: 1fr;
+                    gap: 15px;
+                }}
+                
+                .matchup-grid {{
+                    grid-template-columns: 1fr !important;
+                    gap: 15px !important;
+                    text-align: center !important;
+                }}
+                
+                .vs-section {{
+                    order: -1;
+                    font-size: 1.2em !important;
+                    margin-bottom: 10px;
+                    padding: 10px;
+                    background: #f8f9fa;
+                    border-radius: 8px;
+                }}
+                
+                .team-section {{
+                    padding: 15px;
+                    background: #fff;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    margin-bottom: 10px;
+                }}
+                
+                .team-name {{
+                    font-size: 1em !important;
+                }}
+                
+                .team-score {{
+                    font-size: 1.8em !important;
+                }}
+                
+                .team-record {{
+                    font-size: 0.8em !important;
+                }}
+                
+                .game-header {{
+                    padding: 15px !important;
+                }}
+                
+                .game-header h4 {{
+                    font-size: 1.2em !important;
+                }}
+                
+                .game-details > div {{
+                    grid-template-columns: 1fr !important;
+                }}
+                
+                /* Live Game Mobile Styles */
+                .live-game-header {{
+                    padding: 15px !important;
+                }}
+                
+                .live-game-header h4 {{
+                    font-size: 1.2em !important;
+                }}
+                
+                /* Stack live game panels vertically on mobile */
+                .live-game-details {{
+                    grid-template-columns: 1fr !important;
+                }}
+                
+                /* Strike Zone Mobile */
+                .strike-zone {{
+                    width: 150px !important;
+                    height: 150px !important;
+                }}
+                
+                /* NASCAR Table Mobile */
+                .data-table {{
+                    font-size: 0.8em;
+                    overflow-x: auto;
+                    display: block;
+                    white-space: nowrap;
+                }}
+                
+                .data-table thead,
+                .data-table tbody,
+                .data-table th,
+                .data-table td,
+                .data-table tr {{
+                    display: block;
+                }}
+                
+                .data-table thead tr {{
+                    position: absolute;
+                    top: -9999px;
+                    left: -9999px;
+                }}
+                
+                .data-table tr {{
+                    border: 1px solid #ccc;
+                    padding: 10px;
+                    margin-bottom: 10px;
+                    background: white;
+                    border-radius: 8px;
+                }}
+                
+                .data-table td {{
+                    border: none;
+                    position: relative;
+                    padding-left: 50%;
+                    padding-top: 8px;
+                    padding-bottom: 8px;
+                }}
+                
+                .data-table td:before {{
+                    content: attr(data-label) ": ";
+                    position: absolute;
+                    left: 6px;
+                    width: 45%;
+                    padding-right: 10px;
+                    white-space: nowrap;
+                    font-weight: bold;
+                    color: #2c3e50;
+                }}
+            }}
+            
+            @media (max-width: 480px) {{
+                .header h1 {{
+                    font-size: 1.5em;
+                }}
+                
+                .nav-tab {{
+                    padding: 10px 15px;
+                    font-size: 14px;
+                }}
+                
+                .team-score {{
+                    font-size: 1.5em !important;
+                }}
+                
+                .game-header h4 {{
+                    font-size: 1.1em !important;
+                }}
+                
+                .btn {{
+                    padding: 10px 20px;
+                    font-size: 14px;
+                }}
+            }}
         </style>
     </head>
     <body>
@@ -1444,41 +1600,41 @@ async def data_preview(request: Request):
                         html += `
                             <div class="teams-section" style="margin-bottom: 20px;">
                                 <h4 style="margin-bottom: 15px; color: #2c3e50;">⚾ Matchup</h4>
-                                <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: center; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <div class="matchup-grid" style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: center; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                                     
                                     <!-- Away Team -->
-                                    <div style="text-align: center;">
-                                        <div style="font-size: 1.2em; font-weight: bold; color: #2c3e50; margin-bottom: 8px;">
+                                    <div class="team-section" style="text-align: center;">
+                                        <div class="team-name" style="font-size: 1.2em; font-weight: bold; color: #2c3e50; margin-bottom: 8px;">
                                             ${{awayTeam.team.name}} ${{awayTeam.isWinner ? '🏆' : ''}}
                                         </div>
-                                        <div style="font-size: 2em; font-weight: bold; color: #007bff; margin-bottom: 8px;">
+                                        <div class="team-score" style="font-size: 2em; font-weight: bold; color: #007bff; margin-bottom: 8px;">
                                             ${{awayScore}}
                                         </div>
-                                        <div style="font-size: 0.9em; color: #6c757d;">
+                                        <div class="team-record" style="font-size: 0.9em; color: #6c757d;">
                                             Record: ${{awayTeam.leagueRecord ? `${{awayTeam.leagueRecord.wins}}-${{awayTeam.leagueRecord.losses}} (${{awayTeam.leagueRecord.pct}})` : 'N/A'}}
                                         </div>
-                                        <div style="font-size: 0.8em; color: #6c757d; margin-top: 4px;">
+                                        <div class="team-location" style="font-size: 0.8em; color: #6c757d; margin-top: 4px;">
                                             (Away)
                                         </div>
                                     </div>
                                     
                                     <!-- VS -->
-                                    <div style="text-align: center; font-size: 1.5em; color: #6c757d; font-weight: bold;">
+                                    <div class="vs-section" style="text-align: center; font-size: 1.5em; color: #6c757d; font-weight: bold;">
                                         ${{gameFinished ? 'FINAL' : 'VS'}}
                                     </div>
                                     
                                     <!-- Home Team -->
-                                    <div style="text-align: center;">
-                                        <div style="font-size: 1.2em; font-weight: bold; color: #2c3e50; margin-bottom: 8px;">
+                                    <div class="team-section" style="text-align: center;">
+                                        <div class="team-name" style="font-size: 1.2em; font-weight: bold; color: #2c3e50; margin-bottom: 8px;">
                                             ${{homeTeam.team.name}} ${{homeTeam.isWinner ? '🏆' : ''}}
                                         </div>
-                                        <div style="font-size: 2em; font-weight: bold; color: #28a745; margin-bottom: 8px;">
+                                        <div class="team-score" style="font-size: 2em; font-weight: bold; color: #28a745; margin-bottom: 8px;">
                                             ${{homeScore}}
                                         </div>
-                                        <div style="font-size: 0.9em; color: #6c757d;">
+                                        <div class="team-record" style="font-size: 0.9em; color: #6c757d;">
                                             Record: ${{homeTeam.leagueRecord ? `${{homeTeam.leagueRecord.wins}}-${{homeTeam.leagueRecord.losses}} (${{homeTeam.leagueRecord.pct}})` : 'N/A'}}
                                         </div>
-                                        <div style="font-size: 0.8em; color: #6c757d; margin-top: 4px;">
+                                        <div class="team-location" style="font-size: 0.8em; color: #6c757d; margin-top: 4px;">
                                             (Home)
                                         </div>
                                     </div>
@@ -1531,11 +1687,11 @@ async def data_preview(request: Request):
                             </div>
                         </div>
                         
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                        <div class="live-game-details" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px;">
                             <!-- Current At-Bat -->
                             <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #007bff;">
                                 <h5 style="margin: 0 0 15px 0; color: #2c3e50;">🏏 Current At-Bat</h5>
-                                <div style="margin-bottom: 10px;"><strong>Batter:</strong> ${{data.batter}} (.{{data.batting_avg}})</div>
+                                <div style="margin-bottom: 10px;"><strong>Batter:</strong> ${{data.batter}} (.${{data.batting_avg}})</div>
                                 <div style="margin-bottom: 10px;"><strong>Pitcher:</strong> ${{data.pitcher}}</div>
                                 <div style="margin-bottom: 10px;"><strong>Count:</strong> ${{data.count.balls}}-${{data.count.strikes}} (${{data.count.outs}} outs)</div>
                                 <div><strong>Today's Line:</strong> ${{data.todays_line}}</div>
@@ -1555,7 +1711,7 @@ async def data_preview(request: Request):
                         <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
                             <h5 style="margin: 0 0 15px 0; color: #2c3e50;">🎯 Strike Zone</h5>
                             <div style="text-align: center;">
-                                <div style="display: inline-block; position: relative; width: 200px; height: 200px; border: 2px solid #333; background: linear-gradient(to bottom, #e3f2fd 0%, #bbdefb 100%);">
+                                <div class="strike-zone" style="display: inline-block; position: relative; width: 200px; height: 200px; border: 2px solid #333; background: linear-gradient(to bottom, #e3f2fd 0%, #bbdefb 100%);">
                                     <div style="position: absolute; left: ${{(data.matrix_location.x - 1) * 60 + 20}}px; top: ${{(data.matrix_location.y - 1) * 60 + 20}}px; width: 20px; height: 20px; background: #ff4444; border-radius: 50%; transform: translate(-50%, -50%); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>
                                     <div style="position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%); font-size: 0.8em; color: #666;">Home Plate</div>
                                 </div>
