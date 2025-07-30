@@ -1566,7 +1566,7 @@ async def data_preview(request: Request):
                     
                     html += '</tbody></table>';
                     
-                }} else if (data.gamePk && sport === 'Baseball') {{
+                }} else if (sport === 'Baseball' && (data.gamePk || data.gameId || data.game_id || data.teams || data.gameDate)) {{
                     // Format baseball game data
                     const gameDate = new Date(data.gameDate).toLocaleDateString('en-US', {{
                         weekday: 'long',
