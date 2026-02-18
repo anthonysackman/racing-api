@@ -330,33 +330,14 @@ async def index(request: Request):
             }}
             
             .checkbox-label input[type="checkbox"] {{
-                display: none;
+                width: 18px;
+                height: 18px;
+                margin-right: 8px;
+                cursor: pointer;
             }}
             
             .checkmark {{
-                width: 18px;
-                height: 18px;
-                border: 2px solid #e1e8ed;
-                border-radius: 3px;
-                margin-right: 8px;
-                position: relative;
-                transition: all 0.3s;
-            }}
-            
-            .checkbox-label input[type="checkbox"]:checked + .checkmark {{
-                background: #3498db;
-                border-color: #3498db;
-            }}
-            
-            .checkbox-label input[type="checkbox"]:checked + .checkmark::after {{
-                content: '✓';
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                color: white;
-                font-size: 12px;
-                font-weight: bold;
+                display: none;
             }}
             
             .btn {{
@@ -1240,8 +1221,10 @@ async def data_preview(request: Request):
                             <select id="mlb-data-type">
                                 <option value="last">Last Game</option>
                                 <option value="next">Next Game</option>
+                                <option value="schedule">Schedule (next X games)</option>
                                 <option value="live">Live Game</option>
                                 <option value="live-details">Live Game Details</option>
+                                <option value="standings">Standings</option>
                             </select>
                         </div>
                         <div class="control-group">
@@ -1321,11 +1304,17 @@ async def data_preview(request: Request):
                     case 'next':
                         endpoint = `/baseball/next/${{encodeURIComponent(teamName)}}`;
                         break;
+                    case 'schedule':
+                        endpoint = `/baseball/schedule/${{encodeURIComponent(teamName)}}?limit=10`;
+                        break;
                     case 'live':
                         endpoint = `/baseball/live/${{encodeURIComponent(teamName)}}`;
                         break;
                     case 'live-details':
                         endpoint = `/baseball/live/details/${{encodeURIComponent(teamName)}}`;
+                        break;
+                    case 'standings':
+                        endpoint = `/baseball/standings`;
                         break;
                 }}
                 
@@ -1446,6 +1435,49 @@ async def data_preview(request: Request):
                             `;
                         }});
                         html += '</tbody></table>';
+                    }} else if (data.length > 0 && data[0].game_date && data[0].away_team) {{
+                        // Baseball schedule (next X games)
+                        html += `
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Time (UTC)</th>
+                                        <th>Away</th>
+                                        <th>Home</th>
+                                        <th>Venue</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
+                        data.forEach((game) => {{
+                            html += `
+                                <tr>
+                                    <td>${{game.game_date}}</td>
+                                    <td>${{game.game_time_utc || '-'}}</td>
+                                    <td>${{game.away_team}}</td>
+                                    <td>${{game.home_team}}</td>
+                                    <td>${{game.venue || '-'}}</td>
+                                    <td>${{game.status || '-'}}</td>
+                                </tr>
+                            `;
+                        }});
+                        html += '</tbody></table>';
+                    }} else if (data.length > 0 && data[0].division && Array.isArray(data[0].teams)) {{
+                        // Baseball standings (by division)
+                        data.forEach((div) => {{
+                            html += `<div class="race-header" style="margin-top: 1em;"><h4>${{div.division}}</h4></div>`;
+                            html += `
+                                <table class="data-table">
+                                    <thead><tr><th>Rank</th><th>Team</th><th>W</th><th>L</th><th>GB</th></tr></thead>
+                                    <tbody>
+                            `;
+                            div.teams.forEach((t) => {{
+                                html += `<tr><td>${{t.rank}}</td><td>${{t.team_name}}</td><td>${{t.wins}}</td><td>${{t.losses}}</td><td>${{t.gb}}</td></tr>`;
+                            }});
+                            html += '</tbody></table>';
+                        }});
                     }} else {{
                         // Fallback for other array data
                         html += '<div class="data-items">';

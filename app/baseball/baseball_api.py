@@ -8,6 +8,16 @@ logger.setLevel(logging.DEBUG)
 
 BASE_URL = "https://statsapi.mlb.com/api/v1"
 
+# Division ID to short name (API often returns division.name as None)
+DIVISION_NAMES = {
+    200: "AL West",
+    201: "AL East",
+    202: "AL Central",
+    203: "NL West",
+    204: "NL East",
+    205: "NL Central",
+}
+
 MLB_TEAMS = {
     108: {"name": "Angels", "color": (15, 0, 0)},
     109: {"name": "D-backs", "color": (13, 2, 2)},
@@ -139,6 +149,71 @@ def get_next_game(team_id):
             if game["status"]["detailedState"] == "Scheduled":
                 return game
     return None
+
+
+def get_next_games(team_id, limit=5):
+    """Next N scheduled games for a team. Returns minimal list for matrix display."""
+    now = datetime.today()
+    today = now.strftime("%Y-%m-%d")
+    end_date = (now + timedelta(days=60)).strftime("%Y-%m-%d")
+
+    res = requests.get(
+        f"{BASE_URL}/schedule?sportId=1&teamId={team_id}&startDate={today}&endDate={end_date}&limit=100",
+        timeout=10,
+    )
+    data = res.json()
+    games_out = []
+    for date_obj in data.get("dates", []):
+        for game in date_obj.get("games", []):
+            if game.get("status", {}).get("detailedState") not in ("Scheduled", "Preview", "Pre-Game"):
+                continue
+            away = game.get("teams", {}).get("away", {}).get("team", {})
+            home = game.get("teams", {}).get("home", {}).get("team", {})
+            games_out.append({
+                "gamePk": game.get("gamePk"),
+                "game_date": game.get("officialDate") or game.get("gameDate", "")[:10],
+                "game_time_utc": game.get("gameDate", "")[11:16] if len(game.get("gameDate", "")) >= 16 else "",
+                "away_team": away.get("name"),
+                "home_team": home.get("name"),
+                "venue": game.get("venue", {}).get("name"),
+                "status": game.get("status", {}).get("detailedState"),
+            })
+            if len(games_out) >= limit:
+                return games_out
+    return games_out
+
+
+def get_standings(season=None):
+    """Standings for all AL/NL divisions. Returns list of divisions with minimal team records."""
+    if season is None:
+        season = datetime.now().year
+    res = requests.get(
+        f"{BASE_URL}/standings?leagueId=103,104&season={season}",
+        timeout=10,
+    )
+    data = res.json()
+    out = []
+    for rec in data.get("records", []):
+        div = rec.get("division", {})
+        div_id = div.get("id")
+        division_name = div.get("name") or DIVISION_NAMES.get(div_id) or f"Division {div_id}"
+        teams = []
+        for tr in rec.get("teamRecords", []):
+            team = tr.get("team", {})
+            lr = tr.get("leagueRecord", {}) or {}
+            teams.append({
+                "rank": tr.get("divisionRank"),
+                "team_name": team.get("name"),
+                "wins": lr.get("wins"),
+                "losses": lr.get("losses"),
+                "gb": tr.get("gamesBack") or "-",
+            })
+        out.append({
+            "division": division_name,
+            "division_id": div.get("id"),
+            "teams": teams,
+        })
+    return out
 
 
 def get_live_game(team_id):
