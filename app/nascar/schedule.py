@@ -6,8 +6,11 @@ from pytz import timezone
 
 EASTERN = timezone("US/Eastern")
 PACIFIC = timezone("US/Pacific")
-YEAR = "2025"
-URL = f"https://cf.nascar.com/cacher/{YEAR}/race_list_basic.json"
+
+
+def _get_schedule_url():
+    year = datetime.datetime.now(tz=PACIFIC).year
+    return f"https://cf.nascar.com/cacher/{year}/race_list_basic.json"
 CACHE_FILE = os.path.join("data", "schedule.json")
 
 
@@ -41,7 +44,7 @@ def add_formatted_dates_to_race(race):
 
 def fetch_and_cache_schedule():
     try:
-        response = requests.get(URL, timeout=10)
+        response = requests.get(_get_schedule_url(), timeout=10)
         response.raise_for_status()
         data = response.json()
         os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
