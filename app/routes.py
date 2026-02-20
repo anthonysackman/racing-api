@@ -6,6 +6,18 @@ from datetime import datetime
 from .config_manager import config_manager
 from .constants import DisplayMode, PanelPriority, PanelStatus, ApiStatus
 
+# Human-readable panel names and descriptions for the config UI
+PANEL_LABELS = {
+    "baseball": "MLB (Baseball)",
+    "nascar": "NASCAR",
+    "dashboard": "Dashboard (system status)",
+}
+PANEL_DESCRIPTIONS = {
+    "baseball": "Scores, schedule, live games from this API.",
+    "nascar": "Races, standings, live race data from this API.",
+    "dashboard": "Device status, rotation info, or other static content.",
+}
+
 index_bp = Blueprint("index", url_prefix="/")
 
 
@@ -46,6 +58,8 @@ async def index(request: Request):
     # Generate panel configurations
     panel_configs = ""
     for panel_name, panel_config in config.get("panels", {}).items():
+        panel_label = PANEL_LABELS.get(panel_name, panel_name.title())
+        panel_desc = PANEL_DESCRIPTIONS.get(panel_name, "")
         enabled_checked = "checked" if panel_config.get("enabled", True) else ""
         duration_value = (
             panel_config.get("duration", 30000) // 1000
@@ -58,12 +72,13 @@ async def index(request: Request):
         panel_configs += f"""
         <div class="panel-config">
             <div class="panel-header">
-            <h3>{panel_name.title()} Panel</h3>
+            <h3>{panel_label}</h3>
                 <div class="panel-status">
                     <span class="status-dot {panel_config.get("enabled", True) and "active" or "inactive"}"></span>
                     <span class="status-text">{panel_config.get("enabled", True) and "Enabled" or "Disabled"}</span>
                 </div>
             </div>
+            {f'<p class="panel-desc" style="margin-bottom:10px;color:#7f8c8d;font-size:0.9em;">{panel_desc}</p>' if panel_desc else ''}
             <div class="panel-controls">
                 <div class="control-group">
                     <label class="checkbox-label">
@@ -500,9 +515,9 @@ async def index(request: Request):
                                 {mode_options}
                             </select>
                             <small style="color: #7f8c8d; margin-top: 5px; display: block;">
-                                <strong>Auto:</strong> Automatically rotate between panels based on live content<br>
-                                <strong>Manual:</strong> Manual control of panel selection<br>
-                                <strong>Demo:</strong> Demo mode for testing
+                                <strong>Auto:</strong> Device rotates among enabled panels based on live content.<br>
+                                <strong>Manual:</strong> Device shows one panel at a time; which panel is chosen by the device (e.g. buttons or API). Enable only the panels you want available.<br>
+                                <strong>Demo:</strong> Demo mode for testing.
                             </small>
                     </div>
                     
@@ -532,6 +547,7 @@ async def index(request: Request):
                     
                             <div class="form-group">
                                 <label>Panel Configuration:</label>
+                                <p style="color: #7f8c8d; font-size: 0.9em; margin-bottom: 12px;">Disable a panel to hide it from rotation. Duration = how long it shows when selected; Priority = when it is preferred (live vs static).</p>
                         {panel_configs}
                     </div>
                     
@@ -562,16 +578,13 @@ def get_device_id(request: Request) -> str:
 
 @index_bp.post("/save_config")
 async def save_config(request: Request):
-    # Get device_id from form or fallback to baseball_1
     device_id = request.form.get("device_id", "baseball_1")
     try:
         form_data = request.form or {}
         updates = {}
-        # Extract mode
         mode = form_data.get("mode")
         if mode:
             updates["mode"] = mode
-        # Timing config
         for key in [
             "live_content_timeout",
             "rotation_interval",
@@ -583,27 +596,34 @@ async def save_config(request: Request):
                     updates[key] = int(val) * 1000
                 except Exception:
                     pass
-        # Panels
+        # Panels: start from current config so unchecked = enabled False
+        current = config_manager.get_device_config(device_id)
         panels = {}
+        for pname, pconfig in current.get("panels", {}).items():
+            panels[pname] = {
+                "enabled": False,
+                "duration": pconfig.get("duration", 30000),
+                "priority": pconfig.get("priority", "live"),
+            }
         for k, v in form_data.items():
-            if k.startswith("panels."):
-                parts = k.split(".")
-                if len(parts) >= 3:
-                    panel_name = parts[1]
-                    field = parts[2]
-                    if panel_name not in panels:
-                        panels[panel_name] = {}
-                    if field == "enabled":
-                        panels[panel_name][field] = True
-                    elif field == "duration":
-                        try:
-                            panels[panel_name][field] = int(v) * 1000
-                        except Exception:
-                            pass
-                    else:
-                        panels[panel_name][field] = v
-        if panels:
-            updates["panels"] = panels
+            if not k.startswith("panels."):
+                continue
+            parts = k.split(".")
+            if len(parts) < 3:
+                continue
+            panel_name, field = parts[1], parts[2]
+            if panel_name not in panels:
+                panels[panel_name] = {"enabled": False, "duration": 30000, "priority": "live"}
+            if field == "enabled":
+                panels[panel_name]["enabled"] = True
+            elif field == "duration":
+                try:
+                    panels[panel_name]["duration"] = int(v) * 1000
+                except Exception:
+                    pass
+            elif field == "priority":
+                panels[panel_name]["priority"] = v
+        updates["panels"] = panels
         config_manager.update_device_config(device_id, updates)
         return response.redirect(f"/?success=1&device={device_id}")
     except Exception as e:
