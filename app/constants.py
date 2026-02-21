@@ -53,11 +53,6 @@ DEFAULT_CONFIG = {
                     "duration": 45000,  # 45 seconds
                     "priority": PanelPriority.LIVE.value,
                 },
-                "dashboard": {
-                    "enabled": True,
-                    "duration": 15000,  # 15 seconds
-                    "priority": PanelPriority.STATIC.value,
-                },
             },
         },
         "office_display": {
@@ -76,11 +71,6 @@ DEFAULT_CONFIG = {
                     "duration": 45000,  # 45 seconds
                     "priority": PanelPriority.LIVE.value,
                 },
-                "dashboard": {
-                    "enabled": True,
-                    "duration": 15000,
-                    "priority": PanelPriority.STATIC.value,
-                },
             },
         },
         "living_room": {
@@ -98,11 +88,6 @@ DEFAULT_CONFIG = {
                     "enabled": True,
                     "duration": 45000,
                     "priority": PanelPriority.LIVE.value,
-                },
-                "dashboard": {
-                    "enabled": True,
-                    "duration": 15000,
-                    "priority": PanelPriority.STATIC.value,
                 },
             },
         },

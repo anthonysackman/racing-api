@@ -10,12 +10,10 @@ from .constants import DisplayMode, PanelPriority, PanelStatus, ApiStatus
 PANEL_LABELS = {
     "baseball": "MLB (Baseball)",
     "nascar": "NASCAR",
-    "dashboard": "Dashboard (system status)",
 }
 PANEL_DESCRIPTIONS = {
     "baseball": "Scores, schedule, live games from this API.",
     "nascar": "Races, standings, live race data from this API.",
-    "dashboard": "Device status, rotation info, or other static content.",
 }
 
 index_bp = Blueprint("index", url_prefix="/")

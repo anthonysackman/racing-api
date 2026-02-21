@@ -46,12 +46,17 @@ class ConfigManager:
         if "devices" in config:
             for device_id, device_config in config["devices"].items():
                 if device_id not in merged["devices"]:
-                    merged["devices"][device_id] = device_config
+                    dev = dict(device_config)
+                    if "panels" in dev and "dashboard" in dev["panels"]:
+                        dev["panels"] = {k: v for k, v in dev["panels"].items() if k != "dashboard"}
+                    merged["devices"][device_id] = dev
                 else:
                     # Merge device config fields
                     for key, value in device_config.items():
                         if key == "panels":
                             for panel_name, panel_config in value.items():
+                                if panel_name == "dashboard":
+                                    continue  # deprecated, no longer used
                                 if panel_name in merged["devices"][device_id]["panels"]:
                                     merged["devices"][device_id]["panels"][
                                         panel_name
