@@ -48,6 +48,11 @@ DEFAULT_CONFIG = {
                     "duration": 30000,  # 30 seconds
                     "priority": PanelPriority.LIVE.value,
                 },
+                "nascar": {
+                    "enabled": True,
+                    "duration": 45000,  # 45 seconds
+                    "priority": PanelPriority.LIVE.value,
+                },
                 "dashboard": {
                     "enabled": True,
                     "duration": 15000,  # 15 seconds

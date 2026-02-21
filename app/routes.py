@@ -638,29 +638,40 @@ async def get_config(request: Request):
     return response.json(config_manager.get_device_config(device_id))
 
 
+def _nascar_has_live():
+    """True if NASCAR live feed returns a race right now (same as /nascar/race/live)."""
+    from app.nascar.live_data import get_live_race_data
+    return get_live_race_data() is not None
+
+
 @index_bp.get("/status/panels")
 async def get_panel_status(request: Request):
-    """Get real-time panel status"""
+    """Real-time panel status. has_live_content reflects actual live feeds."""
     device_id = request.args.get("device", "baseball_1")
     config = config_manager.get_device_config(device_id)
-    # This would normally check actual panel states
-    # For now, return mock data
     panels = config.get("panels", {})
+
+    nascar_live = _nascar_has_live()
 
     panel_status = {}
     for panel_name, panel_config in panels.items():
+        if panel_name == "nascar":
+            has_live = nascar_live
+            sub_panel = "live_race" if nascar_live else "standings"
+        elif panel_name == "baseball":
+            has_live = True  # keep current behavior; can wire to MLB later if needed
+            sub_panel = "live_game"
+        else:
+            has_live = False
+            sub_panel = "system_status"
+
         panel_status[panel_name] = {
-            "has_live_content": panel_name
-            in ["baseball", "nascar"],  # Mock live content detection
+            "has_live_content": has_live,
             "last_update": datetime.utcnow().isoformat() + "Z",
             "status": PanelStatus.ACTIVE.value
             if panel_config.get("enabled", True)
             else PanelStatus.DISABLED.value,
-            "current_sub_panel": "live_game"
-            if panel_name == "baseball"
-            else "cup_races"
-            if panel_name == "nascar"
-            else "system_status",
+            "current_sub_panel": sub_panel,
         }
 
     return response.json(panel_status)

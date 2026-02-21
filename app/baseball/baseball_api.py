@@ -165,19 +165,28 @@ def get_next_games(team_id, limit=5):
     games_out = []
     for date_obj in data.get("dates", []):
         for game in date_obj.get("games", []):
-            if game.get("status", {}).get("detailedState") not in ("Scheduled", "Preview", "Pre-Game"):
+            if game.get("status", {}).get("detailedState") not in (
+                "Scheduled",
+                "Preview",
+                "Pre-Game",
+            ):
                 continue
             away = game.get("teams", {}).get("away", {}).get("team", {})
             home = game.get("teams", {}).get("home", {}).get("team", {})
-            games_out.append({
-                "gamePk": game.get("gamePk"),
-                "game_date": game.get("officialDate") or game.get("gameDate", "")[:10],
-                "game_time_utc": game.get("gameDate", "")[11:16] if len(game.get("gameDate", "")) >= 16 else "",
-                "away_team": away.get("name"),
-                "home_team": home.get("name"),
-                "venue": game.get("venue", {}).get("name"),
-                "status": game.get("status", {}).get("detailedState"),
-            })
+            games_out.append(
+                {
+                    "gamePk": game.get("gamePk"),
+                    "game_date": game.get("officialDate")
+                    or game.get("gameDate", "")[:10],
+                    "game_time_utc": game.get("gameDate", "")[11:16]
+                    if len(game.get("gameDate", "")) >= 16
+                    else "",
+                    "away_team": away.get("name"),
+                    "home_team": home.get("name"),
+                    "venue": game.get("venue", {}).get("name"),
+                    "status": game.get("status", {}).get("detailedState"),
+                }
+            )
             if len(games_out) >= limit:
                 return games_out
     return games_out
@@ -196,23 +205,29 @@ def get_standings(season=None):
     for rec in data.get("records", []):
         div = rec.get("division", {})
         div_id = div.get("id")
-        division_name = div.get("name") or DIVISION_NAMES.get(div_id) or f"Division {div_id}"
+        division_name = (
+            div.get("name") or DIVISION_NAMES.get(div_id) or f"Division {div_id}"
+        )
         teams = []
         for tr in rec.get("teamRecords", []):
             team = tr.get("team", {})
             lr = tr.get("leagueRecord", {}) or {}
-            teams.append({
-                "rank": tr.get("divisionRank"),
-                "team_name": team.get("name"),
-                "wins": lr.get("wins"),
-                "losses": lr.get("losses"),
-                "gb": tr.get("gamesBack") or "-",
-            })
-        out.append({
-            "division": division_name,
-            "division_id": div.get("id"),
-            "teams": teams,
-        })
+            teams.append(
+                {
+                    "rank": tr.get("divisionRank"),
+                    "team_name": team.get("name"),
+                    "wins": lr.get("wins"),
+                    "losses": lr.get("losses"),
+                    "gb": tr.get("gamesBack") or "-",
+                }
+            )
+        out.append(
+            {
+                "division": division_name,
+                "division_id": div.get("id"),
+                "teams": teams,
+            }
+        )
     return out
 
 
